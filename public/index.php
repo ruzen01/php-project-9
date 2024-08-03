@@ -19,6 +19,7 @@ use Slim\Views\PhpRenderer;
 use Valitron\Validator as V;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Slim\Flash\Messages;
 
 // Загрузите переменные окружения из файла .env
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
@@ -54,18 +55,48 @@ $container->set('httpClient', function () {
     return new Client();
 });
 
+// Настройка контейнера для флэш-сообщений
+$container->set('flash', function () {
+    return new Messages();
+});
+ 
 // Создайте приложение с контейнером
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-$app->get('/', function (Request $request, Response $response, $args) use ($container) {
-    $renderer = $container->get('renderer');
-    return $renderer->render($response, 'index.phtml', $args);
+ // Middleware для старта сессии
+ $app->add(function ($request, $handler) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $response = $handler->handle($request);
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+
+    return $response;
 });
 
 
-$app->post('/urls', function (Request $request, Response $response, $args) use ($container) {
+
+
+$app->get('/', function (Request $request, Response $response) use ($container) {
+    $renderer = $container->get('renderer');
+    $flash = $container->get('flash');
+
+    // Получение flash-сообщений
+    $messages = $flash->getMessages();
+
+    // Передача переменной $flash в шаблон
+    return $renderer->render($response, 'index.phtml', ['flashMessages' => $messages]);
+});
+
+
+$app->post('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
+    $flash = $container->get('flash');
     $urlData = $request->getParsedBody();
 
     if (isset($urlData['url']['name']) && is_string($urlData['url']['name'])) {
@@ -117,10 +148,9 @@ $app->post('/urls', function (Request $request, Response $response, $args) use (
             $errorMessages = array_merge($errorMessages, $fieldErrors);
         }
         $flashMessage = 'Ошибка валидации: ' . implode('; ', $errorMessages);
+        $flash->addMessage('error', $flashMessage);
+        return $response->withHeader('Location', '/')->withStatus(302);
     }
-
-    $response->getBody()->write($flashMessage);
-    return $response;
 });
 
 $app->get('/urls', function (Request $request, Response $response, $args) use ($container) {
