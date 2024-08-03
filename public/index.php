@@ -10,6 +10,7 @@ if (file_exists($autoloadPath1)) {
 }
 
 use DI\Container;
+use DiDom\Document;
 use Dotenv\Dotenv;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -62,18 +63,17 @@ $app->get('/', function (Request $request, Response $response, $args) use ($cont
     return $renderer->render($response, 'index.phtml', $args);
 });
 
+
 $app->post('/urls', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
     $urlData = $request->getParsedBody();
 
-    // Проверяем, что поле 'url' существует и является массивом, и получаем значение 'name'
     if (isset($urlData['url']['name']) && is_string($urlData['url']['name'])) {
         $url = trim($urlData['url']['name']);
     } else {
         $url = '';
     }
 
-    // Логирование значения URL перед валидацией
     error_log('URL перед валидацией: ' . $url);
 
     $v = new V(['url' => $url]);
@@ -87,16 +87,27 @@ $app->post('/urls', function (Request $request, Response $response, $args) use (
         $existingUrl = $stmt->fetch();
 
         if (!$existingUrl) {
-            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
-            $stmt->execute([$url, Carbon::now()]);
-            // Получаем ID только что добавленного URL
+            // Получаем содержимое страницы
+            $html = file_get_contents($url);
+            $document = new Document($html);
+
+            // Извлечение данных SEO
+            $h1 = optional($document->first('h1'))->text();
+            $title = optional($document->first('title'))->text();
+            $metaDescription = optional($document->first('meta[name="description"]'))->getAttribute('content');
+
+            // Логирование данных SEO
+            error_log('h1: ' . $h1);
+            error_log('title: ' . $title);
+            error_log('meta description: ' . $metaDescription);
+
+            // Добавление URL и данных SEO в базу данных
+            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at, h1, title, meta_description) VALUES (?, ?, ?, ?, ?)');
+            $stmt->execute([$url, Carbon::now(), $h1, $title, $metaDescription]);
             $urlId = $pdo->lastInsertId();
 
-            // Перенаправление на страницу проверки с использованием ID
             return $response->withHeader('Location', "/urls/$urlId")->withStatus(302);
         } else {
-            $flashMessage = 'URL уже существует';
-            // Перенаправление на существующую страницу, если URL уже в базе данных
             return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
         }
     } else {
