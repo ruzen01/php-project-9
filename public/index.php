@@ -132,6 +132,9 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
                 $metaDescription,
                 Carbon::now()
             ]);
+
+            $flash = $container->get('flash');
+            $flash->addMessage('success', 'Страница успешно проверена');
         } catch (\Exception $e) {
             $flash = $container->get('flash');
             $flash->addMessage('error', 'Ошибка при проверке сайта');
