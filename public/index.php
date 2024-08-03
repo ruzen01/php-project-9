@@ -2,6 +2,8 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use DI\Container;
+use Dotenv\Dotenv;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -9,60 +11,62 @@ use Slim\Views\PhpRenderer;
 use Valitron\Validator as V;
 use Carbon\Carbon;
 
-$databaseUrl = parse_url($_ENV['DATABASE_URL']);
+// Загрузите переменные окружения из файла .env
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
 
-$username = $databaseUrl['user'];
-$password = $databaseUrl['pass'];
-$host = $databaseUrl['host'];
-$port = $databaseUrl['port'];
-$dbName = ltrim($databaseUrl['path'], '/');
+// Создайте контейнер
+$container = new Container();
 
-echo "Username: $username\n";
-echo "Password: $password\n";
-echo "Host: $host\n";
-echo "Port: $port\n";
-echo "Database Name: $dbName\n";
+// Настройте рендерер как сервис в контейнере
+$container->set('renderer', function() {
+    return new PhpRenderer('../templates');
+});
 
+// Настройте PDO как сервис в контейнере
+$container->set('pdo', function() {
+    $databaseUrl = parse_url($_ENV['DATABASE_URL']);
+    $username = $databaseUrl['user'];
+    $password = $databaseUrl['pass'];
+    $host = $databaseUrl['host'];
+    $port = $databaseUrl['port'];
+    $dbName = ltrim($databaseUrl['path'], '/');
 
-try {
     $dsn = "pgsql:host=$host;port=$port;dbname=$dbName";
-    $pdo = new PDO($dsn, $username, $password, [
+
+    return new PDO($dsn, $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
+});
 
-    echo "Подключение к базе данных успешно!";
-} catch (PDOException $e) {
-    die("Ошибка подключения к базе данных: " . $e->getMessage());
-}
-
+// Создайте приложение с контейнером
+AppFactory::setContainer($container);
 $app = AppFactory::create();
-$container = $app->getContainer();
 
-$container['renderer'] = function () {
-    return new PhpRenderer('../templates');
-};
-
-$app->get('/', function (Request $request, Response $response, $args) {
-    $renderer = $this->get('renderer');
+$app->get('/', function (Request $request, Response $response, $args) use ($container) {
+    $renderer = $container->get('renderer');
     return $renderer->render($response, 'index.phtml', $args);
 });
 
-$app->post('/urls', function (Request $request, Response $response, $args) use ($pdo) {
-    $urlData = $request->getParsedBodyParam('url', []);
-    $v = new Valitron\Validator($urlData);
+$app->post('/urls', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
+    $urlData = $request->getParsedBody();
+    $url = $urlData['url'] ?? [];
+
+    $v = new Valitron\Validator($url);
     $v->rule('required', 'name')->message('URL обязателен');
     $v->rule('url', 'name')->message('Неверный URL');
     $v->rule('lengthMax', 'name', 255)->message('URL не должен превышать 255 символов');
 
     if ($v->validate()) {
         $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
-        $stmt->execute([$urlData['name']]);
+        $stmt->execute([$url['name']]);
         $existingUrl = $stmt->fetch();
 
         if (!$existingUrl) {
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
-            $stmt->execute([$urlData['name'], Carbon::now()]);
+            $stmt->execute([$url['name'], Carbon::now()]);
             $flashMessage = 'URL успешно добавлен!';
         } else {
             $flashMessage = 'URL уже существует!';
@@ -75,27 +79,42 @@ $app->post('/urls', function (Request $request, Response $response, $args) use (
     return $response;
 });
 
-$app->get('/urls', function (Request $request, Response $response, $args) use ($pdo) {
+$app->get('/urls', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
     $stmt = $pdo->query('SELECT * FROM urls ORDER BY created_at DESC');
     $urls = $stmt->fetchAll();
 
     $args['urls'] = $urls;
-    $renderer = $this->get('renderer');
+    $renderer = $container->get('renderer');
     return $renderer->render($response, 'urls.phtml', $args);
 });
 
-$app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($pdo) {
+$app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
     $stmt = $pdo->prepare('SELECT * FROM urls WHERE id = ?');
     $stmt->execute([$args['id']]);
     $url = $stmt->fetch();
 
     if ($url) {
         $args['url'] = $url;
-        $renderer = $this->get('renderer');
+        $renderer = $container->get('renderer');
         return $renderer->render($response, 'url.phtml', $args);
     } else {
         return $response->withStatus(404)->write('URL не найден');
     }
+});
+
+// Добавление маршрута для /url
+$app->get('/url', function (Request $request, Response $response, $args) use ($container) {
+    $response->getBody()->write("Маршрут /url успешно обработан");
+    return $response;
+});
+
+// Добавление маршрута для /url/{id}
+$app->get('/url/{id}', function (Request $request, Response $response, $args) use ($container) {
+    $id = $args['id'];
+    $response->getBody()->write("Маршрут /url/{$id} успешно обработан");
+    return $response;
 });
 
 $app->run();
