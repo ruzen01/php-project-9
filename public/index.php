@@ -12,17 +12,13 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Slim\Flash\Messages;
 
-// Автозагрузка зависимостей
 require_once file_exists(__DIR__ . '/../../autoload.php') ? __DIR__ . '/../../autoload.php' : __DIR__ . '/../vendor/autoload.php';
 
-// Загрузка переменных окружения
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-// Создание контейнера
 $container = new Container();
 
-// Настройка сервисов в контейнере
 $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 $container->set('pdo', function () {
     $databaseUrl = parse_url($_ENV['DATABASE_URL']);
@@ -35,11 +31,9 @@ $container->set('pdo', function () {
 $container->set('httpClient', fn() => new Client());
 $container->set('flash', fn() => new Messages());
 
-// Создание и настройка приложения
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-// Middleware для управления сессиями
 $app->add(function ($request, $handler) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -51,7 +45,6 @@ $app->add(function ($request, $handler) {
     return $response;
 });
 
-// Главная страница
 $app->get('/', function (Request $request, Response $response) use ($container) {
     $flash = $container->get('flash');
     $renderer = $container->get('renderer');
@@ -60,7 +53,6 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
     ]);
 });
 
-// Обработчик добавления URL
 $app->post('/urls', function (Request $request, Response $response) use ($container) {
     $url = trim($request->getParsedBody()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
@@ -96,7 +88,6 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     return $response->withHeader('Location', '/')->withStatus(302)->withHeader('X-URL', $url);
 });
 
-// Проверка сайта
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
     $httpClient = $container->get('httpClient');
@@ -145,7 +136,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
 });
 
-// Страница со списком URL
 $app->get('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
     $stmt = $pdo->query('
@@ -165,7 +155,7 @@ $app->get('/urls', function (Request $request, Response $response) use ($contain
     return $renderer->render($response, 'urls.phtml', ['urls' => $stmt->fetchAll()]);
 });
 
-// Страница с информацией о конкретном URL
+
 $app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
     $stmt = $pdo->prepare('SELECT * FROM urls WHERE id = ?');
@@ -186,5 +176,4 @@ $app->get('/urls/{id}', function (Request $request, Response $response, $args) u
     return $response->withStatus(404)->write('URL не найден');
 });
 
-// Запуск приложения
 $app->run();
