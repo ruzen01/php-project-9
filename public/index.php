@@ -1,6 +1,13 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+$autoloadPath1 = __DIR__ . '/../../autoload.php';
+$autoloadPath2 = __DIR__ . '/../vendor/autoload.php';
+
+if (file_exists($autoloadPath1)) {
+    require_once $autoloadPath1;
+} else {
+    require_once $autoloadPath2;
+}
 
 use DI\Container;
 use Dotenv\Dotenv;
@@ -10,6 +17,7 @@ use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
 use Valitron\Validator as V;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 
 // Загрузите переменные окружения из файла .env
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
@@ -19,12 +27,12 @@ $dotenv->load();
 $container = new Container();
 
 // Настройте рендерер как сервис в контейнере
-$container->set('renderer', function() {
-    return new PhpRenderer('../templates');
+$container->set('renderer', function () {
+    return new PhpRenderer(__DIR__ . '/../templates');
 });
 
 // Настройте PDO как сервис в контейнере
-$container->set('pdo', function() {
+$container->set('pdo', function () {
     $databaseUrl = parse_url($_ENV['DATABASE_URL']);
     $username = $databaseUrl['user'];
     $password = $databaseUrl['pass'];
@@ -36,8 +44,13 @@ $container->set('pdo', function() {
 
     return new PDO($dsn, $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
+});
+
+// Настройте Guzzle HTTP Client как сервис в контейнере
+$container->set('httpClient', function () {
+    return new Client();
 });
 
 // Создайте приложение с контейнером
@@ -52,51 +65,70 @@ $app->get('/', function (Request $request, Response $response, $args) use ($cont
 $app->post('/urls', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
     $urlData = $request->getParsedBody();
-    $url = $urlData['url'] ?? [];
 
-    $v = new Valitron\Validator($url);
-    $v->rule('required', 'name')->message('URL обязателен');
-    $v->rule('url', 'name')->message('Неверный URL');
-    $v->rule('lengthMax', 'name', 255)->message('URL не должен превышать 255 символов');
+    // Проверяем, что поле 'url' существует и является массивом, и получаем значение 'name'
+    if (isset($urlData['url']['name']) && is_string($urlData['url']['name'])) {
+        $url = trim($urlData['url']['name']);
+    } else {
+        $url = '';
+    }
+
+    // Логирование значения URL перед валидацией
+    error_log('URL перед валидацией: ' . $url);
+
+    $v = new V(['url' => $url]);
+    $v->rule('required', 'url')->message('URL обязателен');
+    $v->rule('url', 'url')->message('Неверный URL');
+    $v->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
 
     if ($v->validate()) {
         $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
-        $stmt->execute([$url['name']]);
+        $stmt->execute([$url]);
         $existingUrl = $stmt->fetch();
 
         if (!$existingUrl) {
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
-            $stmt->execute([$url['name'], Carbon::now()]);
-            $flashMessage = 'URL успешно добавлен!';
+            $stmt->execute([$url, Carbon::now()]);
+            // Получаем ID только что добавленного URL
+            $urlId = $pdo->lastInsertId();
+
+            // Перенаправление на страницу проверки с использованием ID
+            return $response->withHeader('Location', "/urls/$urlId")->withStatus(302);
         } else {
-            $flashMessage = 'URL уже существует!';
+            $flashMessage = 'URL уже существует';
+            // Перенаправление на существующую страницу, если URL уже в базе данных
+            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
         }
     } else {
-        $flashMessage = 'Ошибка валидации';
+        $errors = $v->errors();
+        $errorMessages = [];
+        foreach ($errors as $fieldErrors) {
+            $errorMessages = array_merge($errorMessages, $fieldErrors);
+        }
+        $flashMessage = 'Ошибка валидации: ' . implode('; ', $errorMessages);
     }
 
     $response->getBody()->write($flashMessage);
     return $response;
 });
 
-$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
-    $pdo = $container->get('pdo');
-    $url_id = $args['url_id'];
-    $created_at = Carbon::now();
-
-    $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, created_at) VALUES (?, ?)');
-    $stmt->execute([$url_id, $created_at]);
-
-    return $response->withRedirect("/urls/{$url_id}");
-});
-
 $app->get('/urls', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
+
+    // Запрос для получения всех URL и данных о последней проверке
     $stmt = $pdo->query('
         SELECT urls.*, 
-               (SELECT MAX(created_at) FROM url_checks WHERE url_checks.url_id = urls.id) as last_check 
+               MAX(url_checks.created_at) as last_check, 
+               (SELECT status_code 
+                FROM url_checks 
+                WHERE url_checks.url_id = urls.id 
+                ORDER BY created_at DESC 
+                LIMIT 1) as last_status_code
         FROM urls 
-        ORDER BY created_at DESC');
+        LEFT JOIN url_checks ON urls.id = url_checks.url_id
+        GROUP BY urls.id 
+        ORDER BY urls.created_at DESC');
+
     $urls = $stmt->fetchAll();
 
     $args['urls'] = $urls;
@@ -124,13 +156,52 @@ $app->get('/urls/{id}', function (Request $request, Response $response, $args) u
     }
 });
 
-// Добавление маршрута для /url
+$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
+    $httpClient = $container->get('httpClient');
+    $url_id = $args['url_id'];
+
+    $stmt = $pdo->prepare('SELECT name FROM urls WHERE id = ?');
+    $stmt->execute([$url_id]);
+    $url = $stmt->fetchColumn();
+
+    if ($url) {
+        try {
+            $res = $httpClient->request('GET', $url);
+            $status_code = $res->getStatusCode();
+            $body = (string) $res->getBody();
+            $dom = new \DOMDocument();
+            @$dom->loadHTML($body);
+            $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
+            $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
+            $description = '';
+            $metas = $dom->getElementsByTagName('meta');
+            foreach ($metas as $meta) {
+                if ($meta->getAttribute('name') === 'description') {
+                    $description = $meta->getAttribute('content');
+                    break;
+                }
+            }
+
+            $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$url_id, $status_code, $h1, $title, $description, Carbon::now()]);
+        } catch (\Exception $e) {
+            $response = $response->withHeader('Location', "/urls/{$url_id}")->withStatus(302);
+            $response->getBody()->write('Ошибка при проверке сайта');
+            return $response;
+        }
+    }
+
+    return $response->withHeader('Location', "/urls/{$url_id}")->withStatus(302);
+});
+
+// Добавление маршрута для url
 $app->get('/url', function (Request $request, Response $response, $args) use ($container) {
-    $response->getBody()->write("Маршрут /url успешно обработан");
+    $response->getBody()->write('Маршрут /url успешно обработан');
     return $response;
 });
 
-// Добавление маршрута для /url/{id}
+// Добавление маршрута для url/id
 $app->get('/url/{id}', function (Request $request, Response $response, $args) use ($container) {
     $id = $args['id'];
     $response->getBody()->write("Маршрут /url/{$id} успешно обработан");

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Детали сайта</title>
+    <title>Анализатор страниц</title>
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -20,7 +20,7 @@
                         <a class="nav-link" href="/">Главная</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/urls">Сайты</a>
+                        <a class="nav-link" href="/urls">Сайты</a>
                     </li>
                 </ul>
             </div>
@@ -29,36 +29,53 @@
 
     <main class="flex-grow-1">
         <div class="container-lg mt-3">
-            <h1>Детали сайта</h1>
-            <p>ID: <?= htmlspecialchars($url['id']) ?></p>
-            <p>Имя: <?= htmlspecialchars($url['name']) ?></p>
-            <p>Дата создания: <?= htmlspecialchars($url['created_at']) ?></p>
-
-            <!-- Форма для создания проверки -->
-            <form action="/urls/<?= $url['id'] ?>/checks" method="post">
-                <button type="submit" class="btn btn-primary">Проверить сайт</button>
-            </form>
-
-            <!-- Таблица проверок -->
-            <h2>Проверки</h2>
+            <h1>Сайт: <?= htmlspecialchars($url['name'], ENT_QUOTES, 'UTF-8') ?></h1>
             <div class="table-responsive">
-                <table class="table table-bordered table-hover" data-test="checks">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Дата</th>
-                        </tr>
-                    </thead>
+                <table class="table table-bordered table-hover text-nowrap" data-test="url">
                     <tbody>
-                        <?php foreach ($checks as $check): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($check['id']) ?></td>
-                                <td><?= htmlspecialchars($check['created_at']) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+                        <tr>
+                            <td>ID</td>
+                            <td><?= htmlspecialchars($url['id'], ENT_QUOTES, 'UTF-8') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Имя</td>
+                            <td><?= htmlspecialchars($url['name'], ENT_QUOTES, 'UTF-8') ?></td>
+                        </tr>
+                        <tr>
+                            <td>Дата создания</td>
+                            <td><?= htmlspecialchars($url['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
+            <h2 class="mt-5 mb-3">Проверки</h2>
+            <form method="post" action="/urls/<?= htmlspecialchars($url['id'], ENT_QUOTES, 'UTF-8') ?>/checks">
+                <input type="submit" class="btn btn-primary" value="Запустить проверку">
+            </form>
+            <table class="table table-bordered table-hover" data-test="checks">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Код ответа</th>
+                        <th>h1</th>
+                        <th>title</th>
+                        <th>description</th>
+                        <th>Дата создания</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($checks as $check): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($check['id'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars($check['status_code'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td class="text-break"><?= htmlspecialchars($check['h1'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td class="text-break"><?= htmlspecialchars($check['title'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td class="text-break"><?= htmlspecialchars($check['description'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars($check['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </main>
     <footer class="border-top py-3 mt-5 flex-shrink-0">
