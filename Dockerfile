@@ -1,21 +1,17 @@
-FROM php:8.0-cli
+FROM php:8.2-cli
 
-# Установка необходимых расширений PHP
-RUN docker-php-ext-install pdo pdo_mysql
 
-# Установка Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN apt-get update && apt-get install -y libzip-dev libpq-dev
+RUN docker-php-ext-install zip pdo pdo_pgsql
+
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && php -r "unlink('composer-setup.php');"
 
 WORKDIR /app
 
-COPY . /app
+COPY . .
 
-# Очистка кэша Composer и установка зависимостей
-RUN composer clear-cache \
-    && composer install --no-dev --optimize-autoloader --verbose --no-progress
-
-# Отладочные команды
-RUN composer diagnose
-RUN composer check-platform-reqs
+RUN composer install
 
 CMD ["bash", "-c", "make start"]
