@@ -94,6 +94,24 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
 });
 
 
+// Реализация функции optional
+if (!function_exists('optional')) {
+    function optional($value) {
+        return new class($value) {
+            private $value;
+            public function __construct($value) {
+                $this->value = $value;
+            }
+            public function __call($method, $parameters) {
+                return $this->value ? $this->value->$method(...$parameters) : null;
+            }
+            public function __get($property) {
+                return $this->value ? $this->value->$property : null;
+            }
+        };
+    }
+}
+
 $app->post('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
     $flash = $container->get('flash');
@@ -118,29 +136,34 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $existingUrl = $stmt->fetch();
 
         if (!$existingUrl) {
-            // Получаем содержимое страницы
-            $html = file_get_contents($url);
-            $document = new Document($html);
-
-            // Извлечение данных SEO
-            $h1 = optional($document->first('h1'))->text();
-            $title = optional($document->first('title'))->text();
-            $metaDescription = optional($document->first('meta[name="description"]'))->getAttribute('content');
-
-            // Логирование данных SEO
-            error_log('h1: ' . $h1);
-            error_log('title: ' . $title);
-            error_log('meta description: ' . $metaDescription);
-
-            // Добавление URL и данных SEO в базу данных
-            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at, h1, title, meta_description) VALUES (?, ?, ?, ?, ?)');
-            $stmt->execute([$url, Carbon::now(), $h1, $title, $metaDescription]);
+            // Добавление нового URL в таблицу urls
+            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
+            $stmt->execute([$url, Carbon::now()]);
             $urlId = $pdo->lastInsertId();
-
-            return $response->withHeader('Location', "/urls/$urlId")->withStatus(302);
         } else {
-            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
+            $urlId = $existingUrl['id'];
         }
+
+        // Получаем содержимое страницы
+        $html = file_get_contents($url);
+        $document = new Document($html);
+
+        // Извлечение данных SEO
+        $h1 = optional($document->first('h1'))->text();
+        $title = optional($document->first('title'))->text();
+        $metaDescription = optional($document->first('meta[name="description"]'))->getAttribute('content');
+        $statusCode = 200; // Предположим, что запрос прошел успешно
+
+        // Логирование данных SEO
+        error_log('h1: ' . $h1);
+        error_log('title: ' . $title);
+        error_log('meta description: ' . $metaDescription);
+
+        // Добавление данных SEO в таблицу url_checks
+        $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$urlId, $statusCode, $h1, $title, $metaDescription, Carbon::now()]);
+
+        return $response->withHeader('Location', "/urls/$urlId")->withStatus(302);
     } else {
         $errors = $v->errors();
         $errorMessages = [];
