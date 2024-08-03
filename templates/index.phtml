@@ -48,6 +48,12 @@
                            <?= htmlspecialchars($flashMessages['success'][0]) ?>
                        </div>
                    <?php endif; ?>
+                   <!-- Сообщение о том, что страница уже существует -->
+                   <?php if (!empty($flashMessages['info'])): ?>
+                       <div class="alert alert-info">
+                           <?= htmlspecialchars($flashMessages['info'][0]) ?>
+                       </div>
+                   <?php endif; ?>
                    <form action="/urls" method="post" class="row">
                        <div class="col-8">
                            <label for="url" class="visually-hidden">Url для проверки</label>

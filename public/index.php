@@ -74,15 +74,16 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $stmt->execute([$url]);
         $existingUrl = $stmt->fetch();
 
+        $flash = $container->get('flash');
         if (!$existingUrl) {
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
             $stmt->execute([$url, Carbon::now()]);
-            $flash = $container->get('flash');
             $flash->addMessage('success', 'Страница успешно добавлена');
             return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302);
+        } else {
+            $flash->addMessage('info', 'Страница уже существует');
+            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
         }
-
-        return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
     }
 
     $flash = $container->get('flash');
