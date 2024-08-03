@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
    <meta charset="utf-8">
    <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -42,10 +42,16 @@
                            <?php endforeach; ?>
                        </div>
                    <?php endif; ?>
+                   <!-- Флэш-сообщения об успехе -->
+                   <?php if (!empty($flashMessages['success'])): ?>
+                       <div class="alert alert-success">
+                           <?= htmlspecialchars($flashMessages['success'][0]) ?>
+                       </div>
+                   <?php endif; ?>
                    <form action="/urls" method="post" class="row">
                        <div class="col-8">
                            <label for="url" class="visually-hidden">Url для проверки</label>
-                           <input type="text" name="url[name]" id="url" value="" class="form-control form-control-lg" placeholder="https://www.example.com" required>
+                           <input type="text" name="url[name]" id="url" value="<?= htmlspecialchars($url ?? '') ?>" class="form-control form-control-lg" placeholder="https://www.example.com" required>
                        </div>
                        <div class="col-2">
                            <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить">
