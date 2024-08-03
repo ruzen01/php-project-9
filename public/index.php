@@ -136,6 +136,8 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
             $stmt->execute([$url, Carbon::now()]);
             $urlId = $pdo->lastInsertId();
+            // Успешное добавление
+            $flash->addMessage('success', 'Страница успешно добавлена');
         } else {
             $urlId = $existingUrl['id'];
         }
@@ -218,6 +220,11 @@ $app->get('/urls', function (Request $request, Response $response) use ($contain
 
 $app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
+    $flash = $container->get('flash');
+
+    // Получение флэш-сообщений
+    $messages = $flash->getMessages();
+
     $stmt = $pdo->prepare('SELECT * FROM urls WHERE id = ?');
     $stmt->execute([$args['id']]);
     $url = $stmt->fetch();
@@ -227,8 +234,10 @@ $app->get('/urls/{id}', function (Request $request, Response $response, $args) u
         $stmt->execute([$args['id']]);
         $checks = $stmt->fetchAll();
 
+        // Передача флэш-сообщений в шаблон
         $args['url'] = $url;
         $args['checks'] = $checks;
+        $args['flashMessages'] = $messages;
         $renderer = $container->get('renderer');
         return $renderer->render($response, 'url.phtml', $args);
     } else {
