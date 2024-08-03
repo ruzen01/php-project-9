@@ -59,13 +59,13 @@ $container->set('httpClient', function () {
 $container->set('flash', function () {
     return new Messages();
 });
- 
+
 // Создайте приложение с контейнером
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
- // Middleware для старта сессии
- $app->add(function ($request, $handler) {
+// Middleware для старта сессии
+$app->add(function ($request, $handler) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -79,9 +79,6 @@ $app = AppFactory::create();
     return $response;
 });
 
-
-
-
 $app->get('/', function (Request $request, Response $response) use ($container) {
     $renderer = $container->get('renderer');
     $flash = $container->get('flash');
@@ -92,7 +89,6 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
     // Передача переменной $flash в шаблон
     return $renderer->render($response, 'index.phtml', ['flashMessages' => $messages]);
 });
-
 
 // Реализация функции optional
 if (!function_exists('optional')) {
@@ -144,25 +140,6 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
             $urlId = $existingUrl['id'];
         }
 
-        // Получаем содержимое страницы
-        $html = file_get_contents($url);
-        $document = new Document($html);
-
-        // Извлечение данных SEO
-        $h1 = optional($document->first('h1'))->text();
-        $title = optional($document->first('title'))->text();
-        $metaDescription = optional($document->first('meta[name="description"]'))->getAttribute('content');
-        $statusCode = 200; // Предположим, что запрос прошел успешно
-
-        // Логирование данных SEO
-        error_log('h1: ' . $h1);
-        error_log('title: ' . $title);
-        error_log('meta description: ' . $metaDescription);
-
-        // Добавление данных SEO в таблицу url_checks
-        $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$urlId, $statusCode, $h1, $title, $metaDescription, Carbon::now()]);
-
         return $response->withHeader('Location', "/urls/$urlId")->withStatus(302);
     } else {
         $errors = $v->errors();
@@ -176,7 +153,46 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     }
 });
 
-$app->get('/urls', function (Request $request, Response $response, $args) use ($container) {
+$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
+    $httpClient = $container->get('httpClient');
+    $urlId = $args['url_id'];
+
+    $stmt = $pdo->prepare('SELECT name FROM urls WHERE id = ?');
+    $stmt->execute([$urlId]);
+    $url = $stmt->fetchColumn();
+
+    if ($url) {
+        try {
+            $res = $httpClient->request('GET', $url);
+            $statusCode = $res->getStatusCode();
+            $body = (string) $res->getBody();
+            $dom = new \DOMDocument();
+            @$dom->loadHTML($body);
+            $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
+            $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
+            $description = '';
+            $metas = $dom->getElementsByTagName('meta');
+            foreach ($metas as $meta) {
+                if ($meta->getAttribute('name') === 'description') {
+                    $description = $meta->getAttribute('content');
+                    break;
+                }
+            }
+
+            $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$urlId, $statusCode, $h1, $title, $description, Carbon::now()]);
+        } catch (\Exception $e) {
+            $response = $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
+            $response->getBody()->write('Ошибка при проверке сайта');
+            return $response;
+        }
+    }
+
+    return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
+});
+
+$app->get('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
 
     // Запрос для получения всех URL и данных о последней проверке
@@ -218,45 +234,6 @@ $app->get('/urls/{id}', function (Request $request, Response $response, $args) u
     } else {
         return $response->withStatus(404)->write('URL не найден');
     }
-});
-
-$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
-    $pdo = $container->get('pdo');
-    $httpClient = $container->get('httpClient');
-    $url_id = $args['url_id'];
-
-    $stmt = $pdo->prepare('SELECT name FROM urls WHERE id = ?');
-    $stmt->execute([$url_id]);
-    $url = $stmt->fetchColumn();
-
-    if ($url) {
-        try {
-            $res = $httpClient->request('GET', $url);
-            $status_code = $res->getStatusCode();
-            $body = (string) $res->getBody();
-            $dom = new \DOMDocument();
-            @$dom->loadHTML($body);
-            $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
-            $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
-            $description = '';
-            $metas = $dom->getElementsByTagName('meta');
-            foreach ($metas as $meta) {
-                if ($meta->getAttribute('name') === 'description') {
-                    $description = $meta->getAttribute('content');
-                    break;
-                }
-            }
-
-            $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
-            $stmt->execute([$url_id, $status_code, $h1, $title, $description, Carbon::now()]);
-        } catch (\Exception $e) {
-            $response = $response->withHeader('Location', "/urls/{$url_id}")->withStatus(302);
-            $response->getBody()->write('Ошибка при проверке сайта');
-            return $response;
-        }
-    }
-
-    return $response->withHeader('Location', "/urls/{$url_id}")->withStatus(302);
 });
 
 // Добавление маршрута для url
