@@ -1,6 +1,7 @@
+# Используем официальный образ PHP с FPM
 FROM php:8.1-fpm
 
-# Устанавливаем необходимые системные пакеты
+# Устанавливаем необходимые системные пакеты и PHP-расширения
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
