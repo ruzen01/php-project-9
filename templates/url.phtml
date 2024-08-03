@@ -1,28 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Детали URL</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Детали сайта</title>
+    <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
 </head>
-<body>
-<div class="container">
-    <h1 class="mt-5">Детали URL</h1>
-    <table class="table" data-test="url">
-        <tr>
-            <th>ID</th>
-            <td><?= htmlspecialchars($url['id']) ?></td>
-        </tr>
-        <tr>
-            <th>URL</th>
-            <td><?= htmlspecialchars($url['name']) ?></td>
-        </tr>
-        <tr>
-            <th>Создан</th>
-            <td><?= htmlspecialchars($url['created_at']) ?></td>
-        </tr>
-    </table>
-</div>
+<body class="min-vh-100 d-flex flex-column">
+    <header class="flex-shrink-0">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark px-3">
+            <a class="navbar-brand" href="/">Анализатор страниц</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/urls">Сайты</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow-1">
+        <div class="container-lg mt-3">
+            <h1>Детали сайта</h1>
+            <p>ID: <?= htmlspecialchars($url['id']) ?></p>
+            <p>Имя: <?= htmlspecialchars($url['name']) ?></p>
+            <p>Дата создания: <?= htmlspecialchars($url['created_at']) ?></p>
+
+            <!-- Форма для создания проверки -->
+            <form action="/urls/<?= $url['id'] ?>/checks" method="post">
+                <button type="submit" class="btn btn-primary">Проверить сайт</button>
+            </form>
+
+            <!-- Таблица проверок -->
+            <h2>Проверки</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" data-test="checks">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Дата</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($checks as $check): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($check['id']) ?></td>
+                                <td><?= htmlspecialchars($check['created_at']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <footer class="border-top py-3 mt-5 flex-shrink-0">
+        <div class="container-lg">
+            <div class="text-center">
+                <a href="https://hexlet.io/pages/about" target="_blank">Hexlet</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

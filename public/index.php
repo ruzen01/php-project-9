@@ -79,9 +79,24 @@ $app->post('/urls', function (Request $request, Response $response, $args) use (
     return $response;
 });
 
+$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
+    $url_id = $args['url_id'];
+    $created_at = Carbon::now();
+
+    $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, created_at) VALUES (?, ?)');
+    $stmt->execute([$url_id, $created_at]);
+
+    return $response->withRedirect("/urls/{$url_id}");
+});
+
 $app->get('/urls', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
-    $stmt = $pdo->query('SELECT * FROM urls ORDER BY created_at DESC');
+    $stmt = $pdo->query('
+        SELECT urls.*, 
+               (SELECT MAX(created_at) FROM url_checks WHERE url_checks.url_id = urls.id) as last_check 
+        FROM urls 
+        ORDER BY created_at DESC');
     $urls = $stmt->fetchAll();
 
     $args['urls'] = $urls;
@@ -96,7 +111,12 @@ $app->get('/urls/{id}', function (Request $request, Response $response, $args) u
     $url = $stmt->fetch();
 
     if ($url) {
+        $stmt = $pdo->prepare('SELECT * FROM url_checks WHERE url_id = ? ORDER BY created_at DESC');
+        $stmt->execute([$args['id']]);
+        $checks = $stmt->fetchAll();
+
         $args['url'] = $url;
+        $args['checks'] = $checks;
         $renderer = $container->get('renderer');
         return $renderer->render($response, 'url.phtml', $args);
     } else {

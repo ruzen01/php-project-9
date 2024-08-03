@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Анализатор страниц</title>
+    <title>Список сайтов</title>
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -36,25 +36,19 @@
                         <tr>
                             <th>ID</th>
                             <th>Имя</th>
-                            <th>Последняя проверка</th>
+                            <th>Дата последней проверки</th>
                             <th>Код ответа</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (isset($urls) && count($urls) > 0): ?>
-                            <?php foreach ($urls as $url): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($url['id']); ?></td>
-                                    <td><?php echo htmlspecialchars($url['name']); ?></td>
-                                    <td><?php echo htmlspecialchars($url['last_check'] ?? 'Не проверялся'); ?></td>
-                                    <td><?php echo htmlspecialchars($url['status_code'] ?? 'N/A'); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+                        <?php foreach ($urls as $url): ?>
                             <tr>
-                                <td colspan="4" class="text-center">Нет данных</td>
+                                <td><?= htmlspecialchars($url['id']) ?></td>
+                                <td><a href="/urls/<?= htmlspecialchars($url['id']) ?>"><?= htmlspecialchars($url['name']) ?></a></td>
+                                <td><?= htmlspecialchars($url['last_check'] ?? 'Не проверялся') ?></td>
+                                <td><?= htmlspecialchars($url['status_code'] ?? 'N/A') ?></td>
                             </tr>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
