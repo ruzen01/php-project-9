@@ -14,13 +14,16 @@ use Slim\Flash\Messages;
 
 require_once file_exists(__DIR__ . '/../../autoload.php') ? __DIR__ . '/../../autoload.php' : __DIR__ . '/../vendor/autoload.php';
 
+// Загружаем переменные окружения
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 $container = new Container();
 
 $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
+
 $container->set('pdo', function () {
+    // Парсинг переменной окружения DATABASE_URL
     $databaseUrl = parse_url($_ENV['DATABASE_URL']);
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $databaseUrl['host'], $databaseUrl['port'], ltrim($databaseUrl['path'], '/'));
     return new PDO($dsn, $databaseUrl['user'], $databaseUrl['pass'], [
@@ -28,6 +31,7 @@ $container->set('pdo', function () {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 });
+
 $container->set('httpClient', fn() => new Client());
 $container->set('flash', fn() => new Messages());
 
@@ -154,7 +158,6 @@ $app->get('/urls', function (Request $request, Response $response) use ($contain
     $renderer = $container->get('renderer');
     return $renderer->render($response, 'urls.phtml', ['urls' => $stmt->fetchAll()]);
 });
-
 
 $app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($container) {
     $pdo = $container->get('pdo');
