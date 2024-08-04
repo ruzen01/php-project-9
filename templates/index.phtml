@@ -6,6 +6,18 @@
    <title>Анализатор страниц</title>
    <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+   <style>
+       .error-message {
+           border: 1px solid #dc3545;
+           border-radius: .25rem;
+           padding: .75rem 1.25rem;
+           color: #dc3545;
+           background-color: #f8d7da;
+       }
+       .field-error {
+           color: #dc3545;
+       }
+   </style>
 </head>
 <body class="min-vh-100 d-flex flex-column">
    <header class="flex-shrink-0">
@@ -36,7 +48,7 @@
                    <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
                    <!-- Флэш-сообщения об ошибках -->
                    <?php if (!empty($flashMessages['error'])): ?>
-                       <div class="alert alert-danger">
+                       <div class="error-message">
                            <?php foreach ($flashMessages['error'] as $message): ?>
                                <p><?= htmlspecialchars($message) ?></p>
                            <?php endforeach; ?>
@@ -57,7 +69,19 @@
                    <form action="/urls" method="post" class="row">
                        <div class="col-8">
                            <label for="url" class="visually-hidden">Url для проверки</label>
-                           <input type="text" name="url[name]" id="url" value="<?= htmlspecialchars($url ?? '') ?>" class="form-control form-control-lg" placeholder="https://www.example.com" required>
+                           <input type="text" name="url[name]" id="url" value="<?= htmlspecialchars($flashMessages['entered_url'][0] ?? '') ?>" class="form-control form-control-lg <?= !empty($flashMessages['error']) || !empty($flashMessages['incorrect_url']) || !empty($flashMessages['empty_url']) ? 'is-invalid' : '' ?>" placeholder="https://www.example.com" required>
+                           <?php if (!empty($flashMessages['empty_url'])): ?>
+                               <div class="field-error">URL не должен быть пустым</div>
+                           <?php elseif (!empty($flashMessages['incorrect_url'])): ?>
+                               <div class="field-error">Некорректный URL</div>
+                           <?php endif; ?>
+                           <?php if (!empty($flashMessages['error'])): ?>
+                               <div class="invalid-feedback">
+                                   <?php foreach ($flashMessages['error'] as $message): ?>
+                                       <?= htmlspecialchars($message) ?><br>
+                                   <?php endforeach; ?>
+                               </div>
+                           <?php endif; ?>
                        </div>
                        <div class="col-2">
                            <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить">
