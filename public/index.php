@@ -32,10 +32,32 @@ $container->set('pdo', function () {
 
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $host, $port, $dbname);
 
-    return new PDO($dsn, $user, $pass, [
+    $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
+
+    // Создание таблиц, если их нет
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS urls (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP NOT NULL
+        );
+    ");
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS url_checks (
+            id SERIAL PRIMARY KEY,
+            url_id INTEGER NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
+            status_code INTEGER,
+            h1 TEXT,
+            title TEXT,
+            description TEXT,
+            created_at TIMESTAMP NOT NULL
+        );
+    ");
+
+    return $pdo;
 });
 
 $container->set('httpClient', fn() => new Client());
