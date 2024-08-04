@@ -1,7 +1,6 @@
 <?php
 
 use DI\Container;
-use DiDom\Document;
 use Dotenv\Dotenv;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -25,8 +24,15 @@ $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 $container->set('pdo', function () {
     // Парсинг переменной окружения DATABASE_URL
     $databaseUrl = parse_url($_ENV['DATABASE_URL']);
-    $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $databaseUrl['host'], $databaseUrl['port'], ltrim($databaseUrl['path'], '/'));
-    return new PDO($dsn, $databaseUrl['user'], $databaseUrl['pass'], [
+    $host = $databaseUrl['host'];
+    $port = $databaseUrl['port'] ?? '5432'; // Устанавливаем порт по умолчанию, если он не указан
+    $dbname = ltrim($databaseUrl['path'], '/');
+    $user = $databaseUrl['user'];
+    $pass = $databaseUrl['pass'];
+
+    $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $host, $port, $dbname);
+
+    return new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
