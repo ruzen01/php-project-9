@@ -13,7 +13,6 @@ use Slim\Flash\Messages;
 
 require_once file_exists(__DIR__ . '/../../autoload.php') ? __DIR__ . '/../../autoload.php' : __DIR__ . '/../vendor/autoload.php';
 
-// Загружаем переменные окружения
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
@@ -22,10 +21,10 @@ $container = new Container();
 $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 
 $container->set('pdo', function () {
-    // Парсинг переменной окружения DATABASE_URL
+
     $databaseUrl = parse_url($_ENV['DATABASE_URL']);
     $host = $databaseUrl['host'];
-    $port = $databaseUrl['port'] ?? '5432'; // Устанавливаем порт по умолчанию, если он не указан
+    $port = $databaseUrl['port'] ?? '5432';
     $dbname = ltrim($databaseUrl['path'], '/');
     $user = $databaseUrl['user'];
     $pass = $databaseUrl['pass'];
@@ -37,7 +36,7 @@ $container->set('pdo', function () {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 
-    // Создание таблиц, если их нет
+    
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS urls (
             id SERIAL PRIMARY KEY,
@@ -89,7 +88,6 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     $url = trim($request->getParsedBody()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
 
-    // Валидация на пустое поле
     $isEmpty = empty($url);
 
     $v->rule('required', 'url')->message('URL не должен быть пустым');
@@ -144,7 +142,6 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $flash->addMessage('empty_url', 'URL не должен быть пустым');
     }
 
-    // Возвращаем введенный URL
     $flash->addMessage('entered_url', $url);
 
     return $response->withHeader('Location', '/')->withStatus(302);
