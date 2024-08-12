@@ -144,12 +144,12 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
 
     $flash->addMessage('entered_url', $url);
     
-    print_r($flashMessages);
-
     $renderer = $container->get('renderer');
     return $renderer->render($response, 'index.phtml', [
         'flashMessages' => $flash->getMessages()
     ]);
+
+    print_r($flashMessages);
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
