@@ -70,8 +70,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <!-- Форма для ввода URL -->
-                    <form action="/urls" method="post" class="row" novalidate>
+                    <form action="/urls" method="post" class="row" >
                         <div class="col-8">
                             <label for="url" class="visually-hidden">Url для проверки</label>
                             <input type="text" name="url[name]" id="url" value="<?= htmlspecialchars($flashMessages['entered_url'][0] ?? '') ?>" class="form-control form-control-lg <?= !empty($flashMessages['error']) || !empty($flashMessages['incorrect_url']) || !empty($flashMessages['empty_url']) ? 'is-invalid' : '' ?>" placeholder="https://www.example.com" required>
@@ -94,28 +93,6 @@
                             <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить">
                         </div>
                     </form>
-
-                    <!-- Форма поиска -->
-                    <form action="/urls" method="get" class="mt-3">
-                        <div class="input-group">
-                            <input type="search" name="term" value="<?= htmlspecialchars($term ?? '') ?>" class="form-control" placeholder="Введите URL для поиска">
-                            <button class="btn btn-outline-secondary" type="submit">Поиск</button>
-                        </div>
-                    </form>
-
-                    <!-- Вывод результатов поиска -->
-                    <?php if (!empty($urls)): ?>
-                        <ul class="list-group mt-4">
-                            <?php foreach ($urls as $url): ?>
-                                <li class="list-group-item">
-                                    <?= htmlspecialchars($url['name']) ?> - Последняя проверка: <?= htmlspecialchars($url['last_check_at']) ?>, Код статуса: <?= htmlspecialchars($url['last_status_code']) ?>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php elseif (isset($term) && empty($urls)): ?>
-                        <p class="mt-4">Результаты не найдены</p>
-                    <?php endif; ?>
-
                 </div>
             </div>
         </div>
