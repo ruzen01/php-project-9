@@ -23,7 +23,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           # Specify the PHP version
-          php-version: '8.2'
+          php-version: '7.4'
       - name: Update  
         run: make update
       - name: Install
