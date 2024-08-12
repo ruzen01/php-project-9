@@ -144,10 +144,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
 
     $flash->addMessage('entered_url', $url);
 
-    $renderer = $container->get('renderer');
-    return $renderer->render($response, 'index.phtml', [
-        'flashMessages' => $flash->getMessages()
-    ]);
+    return $response->withHeader('Location', '/')->withStatus(302);
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
@@ -198,38 +195,23 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
 });
 
-$app->get('/urls', function (Request $request, Response $response) use ($container) { 
-    $pdo = $container->get('pdo'); 
-
-    // Получение параметра поиска
-    $searchTerm = $request->getQueryParam('term', '');
-
-    // Запрос с фильтрацией по введенному терму
-    $stmt = $pdo->prepare(' 
-        SELECT urls.id, urls.name,  
-               url_checks.created_at as last_check_at, 
-               url_checks.status_code as last_status_code  
-        FROM urls 
-        LEFT JOIN url_checks ON urls.id = url_checks.url_id  
-        AND url_checks.created_at = ( 
-            SELECT MAX(created_at)  
-            FROM url_checks  
-            WHERE url_checks.url_id = urls.id 
-        ) 
-        WHERE urls.name LIKE :term
-        ORDER BY urls.id DESC 
+$app->get('/urls', function (Request $request, Response $response) use ($container) {
+    $pdo = $container->get('pdo');
+    $stmt = $pdo->query('
+        SELECT urls.id, urls.name, 
+               url_checks.created_at as last_check_at,
+               url_checks.status_code as last_status_code 
+        FROM urls
+        LEFT JOIN url_checks ON urls.id = url_checks.url_id 
+        AND url_checks.created_at = (
+            SELECT MAX(created_at) 
+            FROM url_checks 
+            WHERE url_checks.url_id = urls.id
+        )
+        ORDER BY urls.id DESC
     ');
-
-    // Подстановка параметра поиска в запрос
-    $stmt->execute(['term' => '%' . $searchTerm . '%']);
-
-    $renderer = $container->get('renderer'); 
-
-    // Передача данных поиска и результатов в шаблон
-    return $renderer->render($response, 'index.phtml', [
-        'urls' => $stmt->fetchAll(),
-        'term' => $searchTerm // Передача введенного значения в шаблон
-    ]); 
+    $renderer = $container->get('renderer');
+    return $renderer->render($response, 'urls.phtml', ['urls' => $stmt->fetchAll()]);
 });
 
 $app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($container) {
