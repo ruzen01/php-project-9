@@ -3,19 +3,22 @@
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/ruzen01/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ruzen01/php-project-9/actions)
 
-A web application that provides information based on a URL.
+**Page Analyzer** is a web application that provides detailed information based on a given URL.
 
 ## Setup
 
+To set up the project locally, follow these steps:
 ```bash
 git clone https://github.com/ruzen01/php-project-9.git
 cd php-project-9
 ```
 ## Usage
+
+To start the application, use the following command:
+
 ```bash
 make start
 ```
-Open in browser: [http://0.0.0.0:8000/]http://0.0.0.0:8000/
+Then, open the application in your browser at: http://0.0.0.0:8000/
 
-### 
-[On Render.com]https://php-project-9-1vjm.onrender.com/
+Alternatively, you can view it online at Render.com. https://php-project-9-1vjm.onrender.com/
