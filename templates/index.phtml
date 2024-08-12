@@ -6,7 +6,6 @@
     <title>Анализатор страниц</title> 
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet"> 
     <script src="/assets/js/bootstrap.bundle.min.js"></script> 
-
 </head> 
 <body class="min-vh-100 d-flex flex-column"> 
     <header class="flex-shrink-0"> 
@@ -35,30 +34,28 @@
                     <h1 class="display-3">Анализатор страниц</h1> 
                     <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p> 
 
-                    <!-- Вывод флэш-сообщений об ошибках --> 
-                    <?php if (!empty($flashMessages)): ?> 
-                        <?php if (!empty($flashMessages['error'])): ?> 
-                            <div class="invalid-feedback"> 
-                                <?= htmlspecialchars($flashMessages['error'][0]) ?> 
-                            </div> 
-                        <?php endif; ?> 
+                    <!-- Вывод сообщений об ошибках --> 
+                    <?php if (!empty($errors)): ?> 
+                        <div class="alert alert-danger"> 
+                            <?= htmlspecialchars(implode('; ', $errors)) ?> 
+                        </div> 
                     <?php endif; ?> 
 
                     <form action="/urls" method="post" class="row" novalidate> 
                         <div class="col-8"> 
                             <label for="url" class="visually-hidden">Url для проверки</label> 
                             <input type="text" name="url[name]" id="url"   
-                                value="<?= htmlspecialchars($flashMessages['entered_url'][0] ?? '') ?>"   
-                                class="form-control form-control-lg <?= !empty($flashMessages['incorrect_url']) || !empty($flashMessages['empty_url']) ? 'is-invalid' : '' ?>"   
+                                value="<?= htmlspecialchars($entered_url ?? '') ?>"   
+                                class="form-control form-control-lg <?= !empty($incorrectUrlError) || !empty($emptyUrlError) ? 'is-invalid' : '' ?>"   
                                 placeholder="https://www.example.com" required> 
 
                             <!-- Отображение сообщения об ошибке, если URL пустой --> 
-                            <?php if (!empty($flashMessages['empty_url'])): ?> 
+                            <?php if (!empty($emptyUrlError)): ?> 
                                 <div class="invalid-feedback">URL не должен быть пустым</div> 
                             <?php endif; ?> 
 
                             <!-- Отображение сообщения об ошибке, если URL некорректный --> 
-                            <?php if (!empty($flashMessages['incorrect_url'])): ?> 
+                            <?php if (!empty($incorrectUrlError)): ?> 
                                 <div class="invalid-feedback">Некорректный URL</div> 
                             <?php endif; ?> 
                         </div> 

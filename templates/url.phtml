@@ -39,6 +39,11 @@
                     <?= htmlspecialchars($flashMessages['info'][0]) ?>
                 </div>
             <?php endif; ?>
+            <?php if (isset($flashMessages['error'])): ?>
+                <div class="alert alert-danger" role="alert">
+                    <?= htmlspecialchars($flashMessages['error'][0]) ?>
+                </div>
+            <?php endif; ?>
             <h1>URL: <?= htmlspecialchars($url['name']) ?></h1>
             <div class="table-responsive">
                 <!-- Таблица с информацией об адресе -->
