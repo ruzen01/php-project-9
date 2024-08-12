@@ -6,18 +6,7 @@
     <title>Анализатор страниц</title> 
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet"> 
     <script src="/assets/js/bootstrap.bundle.min.js"></script> 
-    <style> 
-        .error-message { 
-            border: 1px solid #dc3545; 
-            border-radius: .25rem; 
-            padding: .75rem 1.25rem; 
-            color: #dc3545; 
-            background-color: #f8d7da; 
-        } 
-        .field-error { 
-            color: #dc3545; 
-        } 
-    </style> 
+
 </head> 
 <body class="min-vh-100 d-flex flex-column"> 
     <header class="flex-shrink-0"> 
@@ -49,7 +38,7 @@
                     <!-- Вывод флэш-сообщений об ошибках --> 
                     <?php if (!empty($flashMessages)): ?> 
                         <?php if (!empty($flashMessages['error'])): ?> 
-                            <div class="error-message"> 
+                            <div class="invalid-feedback"> 
                                 <?= htmlspecialchars($flashMessages['error'][0]) ?> 
                             </div> 
                         <?php endif; ?> 
@@ -65,12 +54,12 @@
 
                             <!-- Отображение сообщения об ошибке, если URL пустой --> 
                             <?php if (!empty($flashMessages['empty_url'])): ?> 
-                                <div class="field-error">URL не должен быть пустым</div> 
+                                <div class="invalid-feedback">URL не должен быть пустым</div> 
                             <?php endif; ?> 
 
                             <!-- Отображение сообщения об ошибке, если URL некорректный --> 
                             <?php if (!empty($flashMessages['incorrect_url'])): ?> 
-                                <div class="field-error">Некорректный URL</div> 
+                                <div class="invalid-feedback">Некорректный URL</div> 
                             <?php endif; ?> 
                         </div> 
                         <div class="col-4"> 
