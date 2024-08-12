@@ -127,12 +127,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
 
         $flash->addMessage('entered_url', $url);
 
-        $renderer = $container->get('renderer');
-
-        return $renderer->render($response, 'index.phtml', [
-            'flashMessages' => $flash->getMessages(),
-            'url' => $url // добавляем текущий URL в шаблон
-        ]);
+        return $response->withRedirect($this->router->pathFor('index'), 307);
     }
 });
 
