@@ -82,67 +82,68 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
     ]);
 });
 
-$app->post('/urls', function (Request $request, Response $response) use ($container) { 
-    $url = trim($request->getParsedBody()['url']['name'] ?? ''); 
-    $v = new V(['url' => $url]); 
- 
-    $isEmpty = empty($url); 
- 
-    $v->rule('required', 'url')->message('URL не должен быть пустым'); 
-    if (!$isEmpty) { 
-        $v->rule('url', 'url')->message('Некорректный URL') 
-          ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов'); 
-    } 
- 
-    if ($v->validate()) { 
-        $pdo = $container->get('pdo'); 
-        $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?'); 
-        $stmt->execute([$url]); 
-        $existingUrl = $stmt->fetch(); 
- 
-        $flash = $container->get('flash'); 
-        if (!$existingUrl) { 
-            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)'); 
-            $stmt->execute([$url, Carbon::now()]); 
-            $flash->addMessage('success', 'Страница успешно добавлена'); 
-            return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302); 
-        } else { 
-            $flash->addMessage('info', 'Страница уже существует'); 
-            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302); 
-        } 
-    } 
- 
-    $flash = $container->get('flash'); 
-    $errors = $v->errors(); 
-    $errorMessages = []; 
-    $incorrectUrlError = false; 
-    $emptyUrlError = false; 
- 
-    foreach ($errors as $fieldErrors) { 
-        foreach ($fieldErrors as $error) { 
-            if ($error === 'Некорректный URL' && !$isEmpty) { 
-                $incorrectUrlError = true; 
-            } elseif ($error === 'URL не должен быть пустым') { 
-                $emptyUrlError = true; 
-            } else { 
-                $errorMessages[] = $error; 
-            } 
-        } 
-    } 
- 
-    if (!empty($errorMessages)) { 
-        $flash->addMessage('error', implode('; ', $errorMessages)); 
-    } 
-    if ($incorrectUrlError) { 
-        $flash->addMessage('incorrect_url', 'Некорректный URL'); 
-    } 
-    if ($emptyUrlError) { 
-        $flash->addMessage('empty_url', 'URL не должен быть пустым'); 
-    } 
- 
-    $flash->addMessage('entered_url', $url); 
- 
-    return $response->withHeader('Location', '/')->withStatus(302); 
+$app->post('/urls', function (Request $request, Response $response) use ($container) {  
+    $url = trim($request->getParsedBody()['url']['name'] ?? '');  
+    $v = new V(['url' => $url]);  
+
+    $isEmpty = empty($url);  
+
+    $v->rule('required', 'url')->message('URL не должен быть пустым');  
+    if (!$isEmpty) {  
+        $v->rule('url', 'url')->message('Некорректный URL')  
+          ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');  
+    }  
+
+    if ($v->validate()) {  
+        $pdo = $container->get('pdo');  
+        $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');  
+        $stmt->execute([$url]);  
+        $existingUrl = $stmt->fetch();  
+
+        $flash = $container->get('flash');  
+        if (!$existingUrl) {  
+            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');  
+            $stmt->execute([$url, Carbon::now()]);  
+            $flash->addMessage('success', 'Страница успешно добавлена');  
+            return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302);  
+        } else {  
+            $flash->addMessage('info', 'Страница уже существует');  
+            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);  
+        }  
+    }  
+
+    $flash = $container->get('flash');  
+    $errors = $v->errors();  
+    $errorMessages = [];  
+    $incorrectUrlError = false;  
+    $emptyUrlError = false;  
+
+    foreach ($errors as $fieldErrors) {  
+        foreach ($fieldErrors as $error) {  
+            if ($error === 'Некорректный URL' && !$isEmpty) {  
+                $incorrectUrlError = true;  
+            } elseif ($error === 'URL не должен быть пустым') {  
+                $emptyUrlError = true;  
+            } else {  
+                $errorMessages[] = $error;  
+            }  
+        }  
+    }  
+
+    if (!empty($errorMessages)) {  
+        $flash->addMessage('error', implode('; ', $errorMessages));  
+    }  
+    if ($incorrectUrlError) {  
+        $flash->addMessage('incorrect_url', 'Некорректный URL');  
+    }  
+    if ($emptyUrlError) {  
+        $flash->addMessage('empty_url', 'URL не должен быть пустым');  
+    }  
+
+    $flash->addMessage('entered_url', $url);  
+
+    // Перенаправляем обратно на страницу результатов /urls
+    return $response->withHeader('Location', '/urls')->withStatus(302);  
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
