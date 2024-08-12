@@ -85,7 +85,13 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
 });
 
 $app->post('/urls', function (Request $request, Response $response) use ($container) { 
-    $url = trim($request->getParsedBody()['url']['name'] ?? ''); 
+    $parsedBody = $request->getParsedBody();
+    $url = '';
+
+    if (is_array($parsedBody) && isset($parsedBody['url']['name'])) {
+        $url = trim($parsedBody['url']['name']);
+    }
+
     $v = new V(['url' => $url]); 
 
     $isEmpty = empty($url); 
@@ -125,17 +131,19 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     $incorrectUrlError = false; 
     $emptyUrlError = false; 
 
-    foreach ($errors as $fieldErrors) { 
-        foreach ($fieldErrors as $error) { 
-            if ($error === 'Некорректный URL' && !$isEmpty) { 
-                $incorrectUrlError = true; 
-            } elseif ($error === 'URL не должен быть пустым') { 
-                $emptyUrlError = true; 
-            } else { 
-                $errorMessages[] = $error; 
-            } 
-        } 
-    } 
+    if (is_array($errors)) {
+        foreach ($errors as $fieldErrors) {
+            foreach ($fieldErrors as $error) {
+                if ($error === 'Некорректный URL' && !$isEmpty) {
+                    $incorrectUrlError = true;
+                } elseif ($error === 'URL не должен быть пустым') {
+                    $emptyUrlError = true;
+                } else {
+                    $errorMessages[] = $error;
+                }
+            }
+        }
+    }
 
     // Рендеринг страницы с отображением сообщений
     $renderer = $container->get('renderer');
@@ -240,7 +248,8 @@ $app->get('/urls/{id}', function (Request $request, Response $response, $args) u
         ]);
     }
 
-    return $response->withStatus(404)->write('URL не найден');
+    $response->getBody()->write('URL не найден');
+    return $response->withStatus(404);
 });
 
 $app->run();
