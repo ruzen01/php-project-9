@@ -83,7 +83,7 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
 });
 
 $app->post('/urls', function (Request $request, Response $response) use ($container) {
-    $url = trim($request->getParsedBody()['url']['name']?? '');
+    $url = trim($request->getParsedBody()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
 
     $isEmpty = empty($url);
@@ -93,7 +93,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $v->rule('url', 'url')->message('Некорректный URL')
           ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
     }
-    
+
     if ($v->validate()) {
         $pdo = $container->get('pdo');
         $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
@@ -112,39 +112,29 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         }
     }
 
-    $flash = $container->get('flash');
     $errors = $v->errors();
     $errorMessages = [];
     $incorrectUrlError = false;
     $emptyUrlError = false;
 
-
-        foreach ($errors as $fieldErrors) {
-            foreach ($fieldErrors as $error) {
-                if ($error === 'Некорректный URL' &&!$isEmpty) {
-                    $incorrectUrlError = true;
-                } elseif ($error === 'URL не должен быть пустым') {
-                    $emptyUrlError = true;
-                } else {
-                    $errorMessages[] = $error;
-                }
+    foreach ($errors as $fieldErrors) {
+        foreach ($fieldErrors as $error) {
+            if ($error === 'Некорректный URL' && !$isEmpty) {
+                $incorrectUrlError = true;
+            } elseif ($error === 'URL не должен быть пустым') {
+                $emptyUrlError = true;
+            } else {
+                $errorMessages[] = $error;
             }
         }
-
-        if (!empty($errorMessages)) {
-            $flash->addMessage('error', implode('; ', $errorMessages));
-        }
-        if ($incorrectUrlError) {
-            $flash->addMessage('incorrect_url', 'Некорректный URL');
-        }
-        if ($emptyUrlError) {
-            $flash->addMessage('empty_url', 'URL не должен быть пустым');
-        }
-
-        $flash->addMessage('entered_url', $url);
-
-        return $response->withHeader('Location', $this->router->pathFor('index'))->withStatus(307);
     }
+
+    return $this->view->render($response->withStatus(400), 'index', [
+        'errors' => $errorMessages,
+        'entered_url' => $url,
+        'incorrect_url_error' => $incorrectUrlError,
+        'empty_url_error' => $emptyUrlError,
+    ]);
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
