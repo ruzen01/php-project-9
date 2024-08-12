@@ -21,7 +21,6 @@ $container = new Container();
 $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 
 $container->set('pdo', function () {
-
     $databaseUrl = parse_url($_ENV['DATABASE_URL']);
     $host = $databaseUrl['host'];
     $port = $databaseUrl['port'] ?? '5432';
@@ -36,7 +35,6 @@ $container->set('pdo', function () {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 
-    
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS urls (
             id SERIAL PRIMARY KEY,
@@ -84,8 +82,8 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
     ]);
 });
 
-$app->post('/urls', function (Request $request, Response $response) use ($container) {
-    $url = trim($request->getParsedBody()['url']['name'] ?? '');
+$app->get('/urls', function (Request $request, Response $response) use ($container) {
+    $url = trim($request->getQueryParams()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
 
     $isEmpty = empty($url);
@@ -144,8 +142,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
 
     $flash->addMessage('entered_url', $url);
 
-    $renderer = $container->get('renderer');
-    return $renderer->render($response, 'index.phtml', [
+    return $container->get('renderer')->render($response, 'index.phtml', [
         'flashMessages' => $flash->getMessages()
     ]);
 });
