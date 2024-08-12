@@ -76,6 +76,14 @@ $app->add(function ($request, $handler) {
     return $response;
 });
 
+$app->get('/', function (Request $request, Response $response) use ($container) {
+    $flash = $container->get('flash');
+    $renderer = $container->get('renderer');
+    return $renderer->render($response, 'index.phtml', [
+        'flashMessages' => $flash->getMessages()
+    ]);
+});
+
 $app->post('/urls', function (Request $request, Response $response) use ($container) {
     $url = trim($request->getParsedBody()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
@@ -88,14 +96,13 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
           ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
     }
 
-    $flash = $container->get('flash');
-
     if ($v->validate()) {
         $pdo = $container->get('pdo');
         $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
         $stmt->execute([$url]);
         $existingUrl = $stmt->fetch();
 
+        $flash = $container->get('flash');
         if (!$existingUrl) {
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
             $stmt->execute([$url, Carbon::now()]);
@@ -105,21 +112,42 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
             $flash->addMessage('info', 'Страница уже существует');
             return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
         }
-    } else {
-        $errors = $v->errors();
-        if (isset($errors['url'])) {
-            foreach ($errors['url'] as $error) {
-                $flash->addMessage('error', $error);
+    }
+
+    $flash = $container->get('flash');
+    $errors = $v->errors();
+    $errorMessages = [];
+    $incorrectUrlError = false;
+    $emptyUrlError = false;
+
+    foreach ($errors as $fieldErrors) {
+        foreach ($fieldErrors as $error) {
+            if ($error === 'Некорректный URL' && !$isEmpty) {
+                $incorrectUrlError = true;
+            } elseif ($error === 'URL не должен быть пустым') {
+                $emptyUrlError = true;
+            } else {
+                $errorMessages[] = $error;
             }
         }
-
-        // Рендерим страницу /urls с флэш-сообщениями и значениями формы
-        $renderer = $container->get('renderer');
-        return $renderer->render($response, 'urls.phtml', [
-            'flashMessages' => $flash->getMessages(),
-            'formData' => ['url' => $url] // передаем значения формы обратно в шаблон
-        ]);
     }
+
+    if (!empty($errorMessages)) {
+        $flash->addMessage('error', implode('; ', $errorMessages));
+    }
+    if ($incorrectUrlError) {
+        $flash->addMessage('incorrect_url', 'Некорректный URL');
+    }
+    if ($emptyUrlError) {
+        $flash->addMessage('empty_url', 'URL не должен быть пустым');
+    }
+
+    $flash->addMessage('entered_url', $url);
+
+    $renderer = $container->get('renderer');
+    return $renderer->render($response, 'index.phtml', [
+        'flashMessages' => $flash->getMessages()
+    ]);
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
@@ -170,23 +198,38 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
 });
 
-$app->get('/urls', function (Request $request, Response $response) use ($container) {
-    $pdo = $container->get('pdo');
-    $stmt = $pdo->query('
-        SELECT urls.id, urls.name, 
-               url_checks.created_at as last_check_at,
-               url_checks.status_code as last_status_code 
-        FROM urls
-        LEFT JOIN url_checks ON urls.id = url_checks.url_id 
-        AND url_checks.created_at = (
-            SELECT MAX(created_at) 
-            FROM url_checks 
-            WHERE url_checks.url_id = urls.id
-        )
-        ORDER BY urls.id DESC
+$app->get('/urls', function (Request $request, Response $response) use ($container) { 
+    $pdo = $container->get('pdo'); 
+
+    // Получение параметра поиска
+    $searchTerm = $request->getQueryParam('term', '');
+
+    // Запрос с фильтрацией по введенному терму
+    $stmt = $pdo->prepare(' 
+        SELECT urls.id, urls.name,  
+               url_checks.created_at as last_check_at, 
+               url_checks.status_code as last_status_code  
+        FROM urls 
+        LEFT JOIN url_checks ON urls.id = url_checks.url_id  
+        AND url_checks.created_at = ( 
+            SELECT MAX(created_at)  
+            FROM url_checks  
+            WHERE url_checks.url_id = urls.id 
+        ) 
+        WHERE urls.name LIKE :term
+        ORDER BY urls.id DESC 
     ');
-    $renderer = $container->get('renderer');
-    return $renderer->render($response, 'urls.phtml', ['urls' => $stmt->fetchAll()]);
+
+    // Подстановка параметра поиска в запрос
+    $stmt->execute(['term' => '%' . $searchTerm . '%']);
+
+    $renderer = $container->get('renderer'); 
+
+    // Передача данных поиска и результатов в шаблон
+    return $renderer->render($response, 'urls.phtml', [
+        'urls' => $stmt->fetchAll(),
+        'term' => $searchTerm // Передача введенного значения в шаблон
+    ]); 
 });
 
 $app->get('/urls/{id}', function (Request $request, Response $response, $args) use ($container) {
