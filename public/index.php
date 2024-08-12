@@ -141,8 +141,12 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     } 
  
     $flash->addMessage('entered_url', $url); 
- 
-    return $response->withHeader('Location', '/')->withStatus(302); 
+    
+    
+    return $renderer->render($response, 'index.phtml', [
+        'flashMessages' => $flash->getMessages()
+    ]);
+ //   return $response->withHeader('Location', '/')->withStatus(302); 
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
