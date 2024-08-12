@@ -127,7 +127,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
 
         $flash->addMessage('entered_url', $url);
 
-        return $response->withRedirect($this->router->pathFor('index'), 307);
+        return $response->withHeader('Location', $this->router->pathFor('index'))->withStatus(307);
     }
 });
 
