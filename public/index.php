@@ -32,32 +32,34 @@ $container->set('pdo', function () {
 
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $host, $port, $dbname);
 
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+    try {
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+    } catch (PDOException $e) {
+        throw new RuntimeException("Failed to connect to the database: " . $e->getMessage());
+    }
 
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS urls (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP NOT NULL
-        );
-    ");
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS url_checks (
-            id SERIAL PRIMARY KEY,
-            url_id INTEGER NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
-            status_code INTEGER,
-            h1 TEXT,
-            title TEXT,
-            description TEXT,
-            created_at TIMESTAMP NOT NULL
-        );
-    ");
+    initializeDatabase($pdo, 'path/to/database.sql');
 
     return $pdo;
 });
+
+function initializeDatabase(PDO $pdo, string $sqlFilePath): void
+{
+    if (!file_exists($sqlFilePath)) {
+        throw new RuntimeException("SQL file not found: " . $sqlFilePath);
+    }
+
+    $sql = file_get_contents($sqlFilePath);
+
+    try {
+        $pdo->exec($sql);
+    } catch (PDOException $e) {
+        throw new RuntimeException("Failed to initialize the database: " . $e->getMessage());
+    }
+}
 
 $container->set('httpClient', fn() => new Client());
 $container->set('flash', fn() => new Messages());
