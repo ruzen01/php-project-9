@@ -4,6 +4,9 @@ lint:
 lint-fix:
 	./vendor/bin/phpcbf --standard=PSR12 src
 
+update:
+	composer update
+
 install:
 	composer install
 
