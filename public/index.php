@@ -93,15 +93,31 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $v->rule('url', 'url')->message('Некорректный URL')
           ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
     }
-
+    
     if ($v->validate()) {
-        //... (остальной код остается прежним)
-    } else {
+        $pdo = $container->get('pdo');
+        $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
+        $stmt->execute([$url]);
+        $existingUrl = $stmt->fetch();
+
         $flash = $container->get('flash');
-        $errors = $v->errors();
-        $errorMessages = [];
-        $incorrectUrlError = false;
-        $emptyUrlError = false;
+        if (!$existingUrl) {
+            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
+            $stmt->execute([$url, Carbon::now()]);
+            $flash->addMessage('success', 'Страница успешно добавлена');
+            return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302);
+        } else {
+            $flash->addMessage('info', 'Страница уже существует');
+            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
+        }
+    }
+
+    $flash = $container->get('flash');
+    $errors = $v->errors();
+    $errorMessages = [];
+    $incorrectUrlError = false;
+    $emptyUrlError = false;
+
 
         foreach ($errors as $fieldErrors) {
             foreach ($fieldErrors as $error) {
