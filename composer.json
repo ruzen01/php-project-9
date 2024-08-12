@@ -14,10 +14,10 @@
         }
     ],
    "require": {
-       "slim/slim": "^4.9",
+       "slim/slim": "^4.0",
        "slim/psr7": "^1.7",
        "slim/php-view": "^3.3",
-       "php-di/php-di": "^7.4",
+       "php-di/php-di": "^7.0",
        "vlucas/phpdotenv": "^5.6",
        "vlucas/valitron": "^1.4",
        "nesbot/carbon": "^3.7",
@@ -27,9 +27,9 @@
    },
    "require-dev": {
        "squizlabs/php_codesniffer": "^3.10",
-       "phpunit/phpunit": "^9.5",
+       "phpunit/phpunit": "^11.2",
        "codeclimate/php-test-reporter": "^0.2.0",
-       "phpunit/php-code-coverage": "^9.2",
+       "phpunit/php-code-coverage": "^11.0",
        "phpstan/phpstan": "^1.11"
    }
 }
