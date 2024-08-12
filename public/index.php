@@ -15,20 +15,32 @@ use Slim\Flash\Messages;
 
 require_once file_exists(__DIR__ . '/../../autoload.php') ? __DIR__ . '/../../autoload.php' : __DIR__ . '/../vendor/autoload.php';
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$envPath = __DIR__ . '/../.env';
+
+if (file_exists($envPath)) {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->load();
+}
 
 $container = new Container();
-
 $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 
 $container->set('pdo', function () {
-    $databaseUrl = parse_url($_ENV['DATABASE_URL']);
-    $host = $databaseUrl['host'];
+    $databaseUrl = getenv('DATABASE_URL') ? parse_url(getenv('DATABASE_URL')) : parse_url($_ENV['DATABASE_URL']);
+
+    if (!$databaseUrl) {
+        throw new RuntimeException('DATABASE_URL not set or incorrectly formatted');
+    }
+
+    $host = $databaseUrl['host'] ?? null;
     $port = $databaseUrl['port'] ?? '5432';
-    $dbname = ltrim($databaseUrl['path'], '/');
-    $user = $databaseUrl['user'];
-    $pass = $databaseUrl['pass'];
+    $dbname = isset($databaseUrl['path']) ? ltrim($databaseUrl['path'], '/') : null;
+    $user = $databaseUrl['user'] ?? null;
+    $pass = $databaseUrl['pass'] ?? null;
+
+    if (!$host || !$dbname || !$user || !$pass) {
+        throw new RuntimeException('Incomplete database connection details');
+    }
 
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $host, $port, $dbname);
 
