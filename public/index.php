@@ -193,8 +193,8 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     }
 
     return $renderer->render($response, 'index.phtml', [
-        'flashMessages' => $flash->getMessages()
-]);
+        'flashMessages' => $flash->getMessages()]
+});
 
 $app->get('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
