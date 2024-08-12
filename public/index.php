@@ -139,7 +139,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
 
     // Рендеринг страницы с отображением сообщений
     $renderer = $container->get('renderer');
-    return $renderer->render($response, 'index.phtml', [
+    return $renderer->render($response->withStatus(422), 'index.phtml', [
         'errors' => $errorMessages,
         'incorrectUrlError' => $incorrectUrlError,
         'emptyUrlError' => $emptyUrlError,
