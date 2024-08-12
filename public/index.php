@@ -41,7 +41,7 @@ $container->set('pdo', function () {
         throw new RuntimeException("Failed to connect to the database: " . $e->getMessage());
     }
 
-    initializeDatabase($pdo, 'path/to/database.sql');
+    initializeDatabase($pdo, __DIR__ . '/../' . 'database.sql');
 
     return $pdo;
 });
