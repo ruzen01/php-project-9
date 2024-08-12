@@ -81,7 +81,7 @@
                                 <div class="field-error">Некорректный URL</div>
                             <?php endif; ?>
 
-                            <?php if (!empty($flashMessages['error'])): ?>
+                            <?php if (!empty($flashMessages['error']) && empty($flashMessages['empty_url']) && empty($flashMessages['incorrect_url'])): ?>
                                 <div class="invalid-feedback">
                                     <?php foreach ($flashMessages['error'] as $message): ?>
                                         <?= htmlspecialchars($message) ?><br>
