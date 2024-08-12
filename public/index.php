@@ -76,14 +76,6 @@ $app->add(function ($request, $handler) {
     return $response;
 });
 
-$app->get('/', function (Request $request, Response $response) use ($container) {
-    $flash = $container->get('flash');
-    $renderer = $container->get('renderer');
-    return $renderer->render($response, 'index.phtml', [
-        'flashMessages' => $flash->getMessages()
-    ]);
-});
-
 $app->post('/urls', function (Request $request, Response $response) use ($container) {
     $url = trim($request->getParsedBody()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
@@ -121,10 +113,11 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
             }
         }
 
-        // Рендерим страницу сразу же с флэш-сообщениями
+        // Рендерим страницу /urls с флэш-сообщениями и значениями формы
         $renderer = $container->get('renderer');
         return $renderer->render($response, 'urls.phtml', [
-            'flashMessages' => $flash->getMessages()
+            'flashMessages' => $flash->getMessages(),
+            'formData' => ['url' => $url] // передаем значения формы обратно в шаблон
         ]);
     }
 });
