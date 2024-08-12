@@ -59,10 +59,10 @@
                     <form action="/urls" method="post" class="row" novalidate>
                         <div class="col-8">
                             <label for="url" class="visually-hidden">Url для проверки</label>
-                            <input type="text" name="url[name]" id="url" 
-                                   value="<?= htmlspecialchars($flashMessages['entered_url'][0] ?? '') ?>" 
-                                   class="form-control form-control-lg <?= !empty($flashMessages['incorrect_url']) || !empty($flashMessages['empty_url']) ? 'is-invalid' : '' ?>" 
-                                   placeholder="https://www.example.com" required>
+                            <input type="text" name="url[name]" id="url"  
+                                value="<?= htmlspecialchars($url?? $flashMessages['entered_url'][0]?? '')?>"  
+                                class="form-control form-control-lg <?=!empty($flashMessages['incorrect_url']) ||!empty($flashMessages['empty_url'])? 'is-invalid' : ''?>"  
+                                placeholder="https://www.example.com" required>
 
                             <!-- Отображение сообщения об ошибке, если URL пустой -->
                             <?php if (!empty($flashMessages['empty_url'])): ?>

@@ -128,7 +128,8 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $flash->addMessage('entered_url', $url);
 
         return $renderer->render($response, 'index.phtml', [
-            'flashMessages' => $flash->getMessages()
+            'flashMessages' => $flash->getMessages(),
+            'url' => $url // добавляем текущий URL в шаблон
         ]);
     }
 });
