@@ -143,6 +143,8 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     }
 
     $flash->addMessage('entered_url', $url);
+    
+    print_r($flashMessages);
 
     $renderer = $container->get('renderer');
     return $renderer->render($response, 'index.phtml', [
