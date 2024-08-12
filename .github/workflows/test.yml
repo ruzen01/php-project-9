@@ -24,6 +24,8 @@ jobs:
         with:
           # Specify the PHP version
           php-version: '8.2'
+      - name: Update  
+        run: make update
       - name: Install
         # Install project
         run: make install
