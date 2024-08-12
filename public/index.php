@@ -120,7 +120,12 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
                 $flash->addMessage('error', $error);
             }
         }
-        return $response->withHeader('Location', '/urls')->withStatus(302);
+
+        // Рендерим страницу сразу же с флэш-сообщениями
+        $renderer = $container->get('renderer');
+        return $renderer->render($response, 'urls.phtml', [
+            'flashMessages' => $flash->getMessages()
+        ]);
     }
 });
 
