@@ -226,7 +226,7 @@ $app->get('/urls', function (Request $request, Response $response) use ($contain
     $renderer = $container->get('renderer'); 
 
     // Передача данных поиска и результатов в шаблон
-    return $renderer->render($response, 'urls.phtml', [
+    return $renderer->render($response, 'index.phtml', [
         'urls' => $stmt->fetchAll(),
         'term' => $searchTerm // Передача введенного значения в шаблон
     ]); 
