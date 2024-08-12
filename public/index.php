@@ -54,6 +54,10 @@ function initializeDatabase(PDO $pdo, string $sqlFilePath): void
 
     $sql = file_get_contents($sqlFilePath);
 
+    if ($sql === false) {
+        throw new RuntimeException("Failed to read SQL file: " . $sqlFilePath);
+    }
+
     try {
         $pdo->exec($sql);
     } catch (PDOException $e) {
