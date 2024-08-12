@@ -192,8 +192,9 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         }
     }
 
-    return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
-});
+    return $renderer->render($response, 'index.phtml', [
+        'flashMessages' => $flash->getMessages()
+]);
 
 $app->get('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
