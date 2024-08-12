@@ -160,18 +160,18 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
 
     try {
         $res = $httpClient->get($url, ['timeout' => 10]);
-    
+
         if ($res->getStatusCode() >= 400) {
             // Если статус код >= 400, считаем это ошибкой
             throw new \Exception('Сайт вернул ошибку: ' . $res->getStatusCode());
         }
-    
+
         $dom = new \DOMDocument();
         @$dom->loadHTML((string) $res->getBody());
-    
+
         $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
         $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
-    
+
         $metaDescription = '';
         $metaTags = $dom->getElementsByTagName('meta');
         foreach ($metaTags as $meta) {
@@ -180,7 +180,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
                 break;
             }
         }
-    
+
         $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             $urlId,
@@ -190,7 +190,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             $metaDescription,
             Carbon::now()
         ]);
-    
+
         $flash->addMessage('success', 'Страница успешно проверена');
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
         $flash->addMessage('error', 'Ошибка при проверке: не удалось подключиться к сайту.');
