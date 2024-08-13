@@ -3,7 +3,6 @@
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/ruzen01/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ruzen01/php-project-9/actions)
 [![Maintainability](https://api.codeclimate.com/v1/badges/cc366838da2071e07a7d/maintainability)](https://codeclimate.com/github/ruzen01/php-project-9/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/cc366838da2071e07a7d/test_coverage)](https://codeclimate.com/github/ruzen01/php-project-9/test_coverage)
 
 **Page Analyzer** is a web application that provides detailed information based on a given URL.
 
