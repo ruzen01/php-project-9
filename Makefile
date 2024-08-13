@@ -5,21 +5,10 @@ lint-fix:
 	./vendor/bin/phpcbf --standard=PSR12 src
 
 update:
-	composer update --with-all-dependencies
+	composer update
 
 install:
 	composer install
-
-test:
-	composer exec --verbose phpunit tests
-
-test-coverage:
-	XDEBUG_MODE=coverage composer exec --verbose phpunit tests -- --coverage-clover build/logs/clover.xml
-
-test-coverage-text:
-	XDEBUG_MODE=coverage composer exec --verbose phpunit tests -- --coverage-text
-
-.PHONY: install lint lint-fix test test-coverage test-coverage-text
 
 PORT ?= 8000
 start:
