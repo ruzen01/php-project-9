@@ -108,73 +108,76 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
 });
 
 $app->post('/urls', function (Request $request, Response $response) use ($container) {
-    $parsedBody = $request->getParsedBody();
-    $url = '';
-
-    if (is_array($parsedBody) && isset($parsedBody['url']['name'])) {
-        $url = trim($parsedBody['url']['name']);
-    }
-
+    $url = trim($request->getParsedBody()['url']['name'] ?? '');
     $v = new V(['url' => $url]);
 
     $isEmpty = empty($url);
 
-    // Валидация: обязательность заполнения URL
     $v->rule('required', 'url')->message('URL не должен быть пустым');
     if (!$isEmpty) {
-        // Валидация: корректность URL и длина
         $v->rule('url', 'url')->message('Некорректный URL')
           ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
     }
 
     if ($v->validate()) {
-        // Подключение к базе данных
         $pdo = $container->get('pdo');
+
+        // Нормализация URL без функции
+        $parsedUrl = parse_url($url);
+        $scheme = $parsedUrl['scheme'] ?? 'http';
+        $host = $parsedUrl['host'] ?? '';
+        $path = $parsedUrl['path'] ?? '';
+        $normalizedUrl = "{$scheme}://{$host}{$path}";
+
         $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
-        $stmt->execute([$url]);
+        $stmt->execute([$normalizedUrl]);
         $existingUrl = $stmt->fetch();
 
         $flash = $container->get('flash');
         if (!$existingUrl) {
-            // Добавление нового URL в базу данных
             $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
-            $stmt->execute([$url, Carbon::now()]);
+            $stmt->execute([$normalizedUrl, Carbon::now()]);  // Сохраняем нормализованный URL
             $flash->addMessage('success', 'Страница успешно добавлена');
             return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302);
         } else {
-            // Если URL уже существует
             $flash->addMessage('info', 'Страница уже существует');
             return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
         }
     }
 
-    // Обработка ошибок валидации
+    $flash = $container->get('flash');
     $errors = $v->errors();
     $errorMessages = [];
     $incorrectUrlError = false;
     $emptyUrlError = false;
 
-    if (is_array($errors)) {
-        foreach ($errors as $fieldErrors) {
-            foreach ($fieldErrors as $error) {
-                if ($error === 'Некорректный URL' && !$isEmpty) {
-                    $incorrectUrlError = true;
-                } elseif ($error === 'URL не должен быть пустым') {
-                    $emptyUrlError = true;
-                } else {
-                    $errorMessages[] = $error;
-                }
+    foreach ($errors as $fieldErrors) {
+        foreach ($fieldErrors as $error) {
+            if ($error === 'Некорректный URL' && !$isEmpty) {
+                $incorrectUrlError = true;
+            } elseif ($error === 'URL не должен быть пустым') {
+                $emptyUrlError = true;
+            } else {
+                $errorMessages[] = $error;
             }
         }
     }
 
-    // Рендеринг страницы с отображением сообщений
+    if (!empty($errorMessages)) {
+        $flash->addMessage('error', implode('; ', $errorMessages));
+    }
+    if ($incorrectUrlError) {
+        $flash->addMessage('incorrect_url', 'Некорректный URL');
+    }
+    if ($emptyUrlError) {
+        $flash->addMessage('empty_url', 'URL не должен быть пустым');
+    }
+
+    $flash->addMessage('entered_url', $url);
+
     $renderer = $container->get('renderer');
-    return $renderer->render($response->withStatus(422), 'index.phtml', [
-        'errors' => $errorMessages,
-        'incorrectUrlError' => $incorrectUrlError,
-        'emptyUrlError' => $emptyUrlError,
-        'entered_url' => $url
+    return $renderer->render($response, 'index.phtml', [
+        'flashMessages' => $flash->getMessages()
     ]);
 });
 
