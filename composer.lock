@@ -55,6 +55,10 @@
                 "doctrine",
                 "time"
             ],
+            "support": {
+                "issues": "https://github.com/CarbonPHP/carbon-doctrine-types/issues",
+                "source": "https://github.com/CarbonPHP/carbon-doctrine-types/tree/3.2.0"
+            },
             "funding": [
                 {
                     "url": "https://github.com/kylekatarnls",
@@ -121,6 +125,10 @@
                 "request",
                 "response"
             ],
+            "support": {
+                "issues": "https://github.com/php-fig/http-message-util/issues",
+                "source": "https://github.com/php-fig/http-message-util/tree/1.1.5"
+            },
             "time": "2020-11-24T22:02:12+00:00"
         },
         {
@@ -169,6 +177,10 @@
                 "Result-Type",
                 "result"
             ],
+            "support": {
+                "issues": "https://github.com/GrahamCampbell/Result-Type/issues",
+                "source": "https://github.com/GrahamCampbell/Result-Type/tree/v1.1.3"
+            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -287,6 +299,10 @@
                 "rest",
                 "web service"
             ],
+            "support": {
+                "issues": "https://github.com/guzzle/guzzle/issues",
+                "source": "https://github.com/guzzle/guzzle/tree/7.9.2"
+            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -366,6 +382,10 @@
             "keywords": [
                 "promise"
             ],
+            "support": {
+                "issues": "https://github.com/guzzle/promises/issues",
+                "source": "https://github.com/guzzle/promises/tree/2.0.3"
+            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -478,6 +498,10 @@
                 "uri",
                 "url"
             ],
+            "support": {
+                "issues": "https://github.com/guzzle/psr7/issues",
+                "source": "https://github.com/guzzle/psr7/tree/2.7.0"
+            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -540,6 +564,10 @@
                 "parser",
                 "xml"
             ],
+            "support": {
+                "issues": "https://github.com/Imangazaliev/DiDOM/issues",
+                "source": "https://github.com/Imangazaliev/DiDOM/tree/2.0.1"
+            },
             "time": "2023-03-05T03:23:48+00:00"
         },
         {
@@ -597,6 +625,10 @@
                 "laravel",
                 "serializable"
             ],
+            "support": {
+                "issues": "https://github.com/laravel/serializable-closure/issues",
+                "source": "https://github.com/laravel/serializable-closure"
+            },
             "time": "2024-08-02T07:48:17+00:00"
         },
         {
@@ -684,6 +716,11 @@
                 "datetime",
                 "time"
             ],
+            "support": {
+                "docs": "https://carbon.nesbot.com/docs",
+                "issues": "https://github.com/briannesbitt/Carbon/issues",
+                "source": "https://github.com/briannesbitt/Carbon"
+            },
             "funding": [
                 {
                     "url": "https://github.com/sponsors/kylekatarnls",
@@ -744,6 +781,10 @@
                 "router",
                 "routing"
             ],
+            "support": {
+                "issues": "https://github.com/nikic/FastRoute/issues",
+                "source": "https://github.com/nikic/FastRoute/tree/master"
+            },
             "time": "2018-02-13T20:26:39+00:00"
         },
         {
@@ -789,6 +830,10 @@
                 "invoke",
                 "invoker"
             ],
+            "support": {
+                "issues": "https://github.com/PHP-DI/Invoker/issues",
+                "source": "https://github.com/PHP-DI/Invoker/tree/2.3.4"
+            },
             "funding": [
                 {
                     "url": "https://github.com/mnapoli",
@@ -854,6 +899,10 @@
                 "ioc",
                 "psr11"
             ],
+            "support": {
+                "issues": "https://github.com/PHP-DI/PHP-DI/issues",
+                "source": "https://github.com/PHP-DI/PHP-DI/tree/7.0.7"
+            },
             "funding": [
                 {
                     "url": "https://github.com/mnapoli",
@@ -925,6 +974,10 @@
                 "php",
                 "type"
             ],
+            "support": {
+                "issues": "https://github.com/schmittjoh/php-option/issues",
+                "source": "https://github.com/schmittjoh/php-option/tree/1.9.3"
+            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -979,6 +1032,10 @@
                 "psr-20",
                 "time"
             ],
+            "support": {
+                "issues": "https://github.com/php-fig/clock/issues",
+                "source": "https://github.com/php-fig/clock/tree/1.0.0"
+            },
             "time": "2022-11-25T14:36:26+00:00"
         },
         {
@@ -1028,6 +1085,10 @@
                 "container-interop",
                 "psr"
             ],
+            "support": {
+                "issues": "https://github.com/php-fig/container/issues",
+                "source": "https://github.com/php-fig/container/tree/2.0.2"
+            },
             "time": "2021-11-05T16:47:00+00:00"
         },
         {
@@ -1077,6 +1138,9 @@
                 "psr",
                 "psr-18"
             ],
+            "support": {
+                "source": "https://github.com/php-fig/http-client"
+            },
             "time": "2023-09-23T14:17:50+00:00"
         },
         {
@@ -1129,6 +1193,9 @@
                 "request",
                 "response"
             ],
+            "support": {
+                "source": "https://github.com/php-fig/http-factory"
+            },
             "time": "2024-04-15T12:06:14+00:00"
         },
         {
@@ -1179,6 +1246,9 @@
                 "request",
                 "response"
             ],
+            "support": {
+                "source": "https://github.com/php-fig/http-message/tree/1.1"
+            },
             "time": "2023-04-04T09:50:52+00:00"
         },
         {
@@ -1232,6 +1302,9 @@
                 "response",
                 "server"
             ],
+            "support": {
+                "source": "https://github.com/php-fig/http-server-handler/tree/1.0.2"
+            },
             "time": "2023-04-10T20:06:20+00:00"
         },
         {
@@ -1285,6 +1358,10 @@
                 "request",
                 "response"
             ],
+            "support": {
+                "issues": "https://github.com/php-fig/http-server-middleware/issues",
+                "source": "https://github.com/php-fig/http-server-middleware/tree/1.0.2"
+            },
             "time": "2023-04-11T06:14:47+00:00"
         },
         {
@@ -1332,6 +1409,9 @@
                 "psr",
                 "psr-3"
             ],
+            "support": {
+                "source": "https://github.com/php-fig/log/tree/3.0.0"
+            },
             "time": "2021-07-14T16:46:02+00:00"
         },
         {
@@ -1372,6 +1452,10 @@
                 }
             ],
             "description": "A polyfill for getallheaders.",
+            "support": {
+                "issues": "https://github.com/ralouphie/getallheaders/issues",
+                "source": "https://github.com/ralouphie/getallheaders/tree/develop"
+            },
             "time": "2019-03-08T08:55:37+00:00"
         },
         {
@@ -1420,6 +1504,10 @@
                 "provider",
                 "slim"
             ],
+            "support": {
+                "issues": "https://github.com/slimphp/Slim-Flash/issues",
+                "source": "https://github.com/slimphp/Slim-Flash/tree/master"
+            },
             "time": "2017-10-22T10:35:05+00:00"
         },
         {
@@ -1472,6 +1560,10 @@
                 "template",
                 "view"
             ],
+            "support": {
+                "issues": "https://github.com/slimphp/PHP-View/issues",
+                "source": "https://github.com/slimphp/PHP-View/tree/3.3.0"
+            },
             "time": "2024-07-13T12:38:15+00:00"
         },
         {
@@ -1550,6 +1642,10 @@
                 "psr-7",
                 "psr7"
             ],
+            "support": {
+                "issues": "https://github.com/slimphp/Slim-Psr7/issues",
+                "source": "https://github.com/slimphp/Slim-Psr7/tree/1.7.0"
+            },
             "time": "2024-06-08T14:48:17+00:00"
         },
         {
@@ -1646,6 +1742,16 @@
                 "micro",
                 "router"
             ],
+            "support": {
+                "docs": "https://www.slimframework.com/docs/v4/",
+                "forum": "https://discourse.slimframework.com/",
+                "irc": "irc://irc.freenode.net:6667/slimphp",
+                "issues": "https://github.com/slimphp/Slim/issues",
+                "rss": "https://www.slimframework.com/blog/feed.rss",
+                "slack": "https://slimphp.slack.com/",
+                "source": "https://github.com/slimphp/Slim",
+                "wiki": "https://github.com/slimphp/Slim/wiki"
+            },
             "funding": [
                 {
                     "url": "https://opencollective.com/slimphp",
@@ -1713,6 +1819,9 @@
                 "psr20",
                 "time"
             ],
+            "support": {
+                "source": "https://github.com/symfony/clock/tree/v7.1.1"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -1777,6 +1886,9 @@
             ],
             "description": "A generic function and convention to trigger deprecation notices",
             "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.5.0"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -1853,6 +1965,9 @@
                 "polyfill",
                 "portable"
             ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.30.0"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -1930,6 +2045,9 @@
                 "portable",
                 "shim"
             ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.30.0"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -2007,6 +2125,9 @@
                 "portable",
                 "shim"
             ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-php80/tree/v1.30.0"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -2080,6 +2201,9 @@
                 "portable",
                 "shim"
             ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-php83/tree/v1.30.0"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -2171,6 +2295,9 @@
             ],
             "description": "Provides tools to internationalize your application",
             "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/translation/tree/v7.1.3"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -2246,6 +2373,9 @@
                 "interoperability",
                 "standards"
             ],
+            "support": {
+                "source": "https://github.com/symfony/translation-contracts/tree/v3.5.0"
+            },
             "funding": [
                 {
                     "url": "https://symfony.com/sponsor",
@@ -2330,6 +2460,10 @@
                 "env",
                 "environment"
             ],
+            "support": {
+                "issues": "https://github.com/vlucas/phpdotenv/issues",
+                "source": "https://github.com/vlucas/phpdotenv/tree/v5.6.1"
+            },
             "funding": [
                 {
                     "url": "https://github.com/GrahamCampbell",
@@ -2389,6 +2523,10 @@
                 "validation",
                 "validator"
             ],
+            "support": {
+                "issues": "https://github.com/vlucas/valitron/issues",
+                "source": "https://github.com/vlucas/valitron/tree/v1.4.11"
+            },
             "funding": [
                 {
                     "url": "https://tidelift.com/funding/github/packagist/vlucas/valitron",
@@ -2457,6 +2595,12 @@
                 "standards",
                 "static analysis"
             ],
+            "support": {
+                "issues": "https://github.com/PHPCSStandards/PHP_CodeSniffer/issues",
+                "security": "https://github.com/PHPCSStandards/PHP_CodeSniffer/security/policy",
+                "source": "https://github.com/PHPCSStandards/PHP_CodeSniffer",
+                "wiki": "https://github.com/PHPCSStandards/PHP_CodeSniffer/wiki"
+            },
             "funding": [
                 {
                     "url": "https://github.com/PHPCSStandards",

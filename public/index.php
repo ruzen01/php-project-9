@@ -1,6 +1,6 @@
 <?php
 
-//session_start();
+session_start();
 
 use DI\Container;
 use Dotenv\Dotenv;
@@ -225,19 +225,22 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             Carbon::now()
         ]);
 
-        $flash->addMessage('success', 'Страница успешно проверена');
-    } catch (\GuzzleHttp\Exception\RequestException $e) {
-        $errorMessage500 = 'SSL: no alternative certificate subject name matches target host name';
-        if (strpos($e->getMessage(), $errorMessage500) !== false) {
-            $renderer = $container->get('renderer');
-            return $renderer->render($response->withStatus(500), 'error500.phtml', [
-                'errorMessage' => ''
-            ]);
-        } else {
-            $flash->addMessage('error', 'Ошибка при проверке: ' . $e->getMessage());
-        }
-    } catch (\Exception $e) {
-        $flash->addMessage('error', 'Произошла ошибка при проверке сайта: ' . $e->getMessage());
+        $flash->addMessage('success', 'Страница успешно проверена'); 
+    } catch (\GuzzleHttp\Exception\ConnectException $e) { 
+        // Ошибка подключения, например, сайт не доступен
+        $flash->addMessage('error', 'Ошибка подключения: ' . $e->getMessage()); 
+    } catch (\GuzzleHttp\Exception\ClientException $e) { 
+        // Ошибка на стороне клиента (4xx)
+        $flash->addMessage('error', 'Ошибка клиента: ' . $e->getResponse()->getStatusCode() . ' - ' . $e->getMessage()); 
+    } catch (\GuzzleHttp\Exception\ServerException $e) { 
+        // Ошибка на стороне сервера (5xx)
+        $flash->addMessage('error', 'Ошибка сервера: ' . $e->getResponse()->getStatusCode() . ' - ' . $e->getMessage()); 
+    } catch (\GuzzleHttp\Exception\RequestException $e) { 
+        // Общая ошибка запроса
+        $flash->addMessage('error', 'Ошибка при выполнении запроса: ' . $e->getMessage()); 
+    } catch (\Exception $e) { 
+        // Любая другая ошибка
+        $flash->addMessage('error', 'Произошла ошибка при проверке сайта: ' . $e->getMessage()); 
     }
 
     return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
