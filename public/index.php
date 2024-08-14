@@ -228,7 +228,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         $flash->addMessage('success', 'Страница успешно проверена'); 
     } catch (\GuzzleHttp\Exception\ConnectException $e) { 
         // Ошибка подключения, например, сайт не доступен
-        $flash->addMessage('error', 'Ошибка подключения'); 
+        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться'); 
     } catch (\GuzzleHttp\Exception\ClientException $e) { 
         // Ошибка на стороне клиента (4xx)
         $flash->addMessage('error', 'Ошибка клиента'); 
