@@ -224,6 +224,8 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             $metaDescription,
             Carbon::now()
         ]);
+
+        $flash->addMessage('success', 'Страница успешно проверена');
     } catch (\GuzzleHttp\Exception\RequestException $e) {
         $errorMessage500 = 'SSL: no alternative certificate subject name matches target host name';
         if (strpos($e->getMessage(), $errorMessage500) !== false) {
