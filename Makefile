@@ -1,8 +1,8 @@
 lint:
-	./vendor/bin/phpcs --standard=PSR12 src
+	./vendor/bin/phpcs --standard=PSR12 public
 
 lint-fix:
-	./vendor/bin/phpcbf --standard=PSR12 src
+	./vendor/bin/phpcbf --standard=PSR12 public
 
 update:
 	composer update

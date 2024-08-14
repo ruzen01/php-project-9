@@ -102,7 +102,7 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
     ]);
 });
 
-$app->post('/urls', function (Request $request, Response $response) use ($container) { 
+$app->post('/urls', function (Request $request, Response $response) use ($container) {
     $parsedBody = $request->getParsedBody();
     $url = '';
 
@@ -110,44 +110,44 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $url = trim($parsedBody['url']['name']);
     }
 
-    $v = new V(['url' => $url]); 
+    $v = new V(['url' => $url]);
 
-    $isEmpty = empty($url); 
+    $isEmpty = empty($url);
 
     // Валидация: обязательность заполнения URL
-    $v->rule('required', 'url')->message('URL не должен быть пустым'); 
-    if (!$isEmpty) { 
+    $v->rule('required', 'url')->message('URL не должен быть пустым');
+    if (!$isEmpty) {
         // Валидация: корректность URL и длина
         $v->rule('url', 'url')->message('Некорректный URL')
-          ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов'); 
-    } 
+          ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
+    }
 
-    if ($v->validate()) { 
+    if ($v->validate()) {
         // Подключение к базе данных
-        $pdo = $container->get('pdo'); 
-        $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?'); 
-        $stmt->execute([$url]); 
-        $existingUrl = $stmt->fetch(); 
+        $pdo = $container->get('pdo');
+        $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
+        $stmt->execute([$url]);
+        $existingUrl = $stmt->fetch();
 
-        $flash = $container->get('flash'); 
-        if (!$existingUrl) { 
+        $flash = $container->get('flash');
+        if (!$existingUrl) {
             // Добавление нового URL в базу данных
-            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)'); 
-            $stmt->execute([$url, Carbon::now()]); 
-            $flash->addMessage('success', 'Страница успешно добавлена'); 
-            return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302); 
-        } else { 
+            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
+            $stmt->execute([$url, Carbon::now()]);
+            $flash->addMessage('success', 'Страница успешно добавлена');
+            return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302);
+        } else {
             // Если URL уже существует
-            $flash->addMessage('info', 'Страница уже существует'); 
-            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302); 
-        } 
-    } 
+            $flash->addMessage('info', 'Страница уже существует');
+            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
+        }
+    }
 
     // Обработка ошибок валидации
-    $errors = $v->errors(); 
-    $errorMessages = []; 
-    $incorrectUrlError = false; 
-    $emptyUrlError = false; 
+    $errors = $v->errors();
+    $errorMessages = [];
+    $incorrectUrlError = false;
+    $emptyUrlError = false;
 
     if (is_array($errors)) {
         foreach ($errors as $fieldErrors) {
@@ -173,14 +173,14 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     ]);
 });
 
-$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) { 
-    $pdo = $container->get('pdo'); 
-    $httpClient = $container->get('httpClient'); 
-    $urlId = $args['url_id']; 
+$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
+    $httpClient = $container->get('httpClient');
+    $urlId = $args['url_id'];
 
-    $stmt = $pdo->prepare('SELECT name FROM urls WHERE id = ?'); 
-    $stmt->execute([$urlId]); 
-    $url = $stmt->fetchColumn(); 
+    $stmt = $pdo->prepare('SELECT name FROM urls WHERE id = ?');
+    $stmt->execute([$urlId]);
+    $url = $stmt->fetchColumn();
 
     $flash = $container->get('flash');
 
@@ -227,7 +227,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         $flash->addMessage('error', 'Произошла ошибка при проверке сайта: ' . $e->getMessage());
     }
 
-    return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302); 
+    return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
 });
 
 $app->get('/urls', function (Request $request, Response $response) use ($container) {
