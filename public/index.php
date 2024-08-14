@@ -228,22 +228,22 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             Carbon::now()
         ]);
 
-        $flash->addMessage('success', 'Страница успешно проверена'); 
-    } catch (\GuzzleHttp\Exception\ConnectException $e) { 
+        $flash->addMessage('success', 'Страница успешно проверена');
+    } catch (\GuzzleHttp\Exception\ConnectException $e) {
         // Ошибка подключения, например, сайт не доступен
-        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться'); 
-    } catch (\GuzzleHttp\Exception\ClientException $e) { 
+        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+    } catch (\GuzzleHttp\Exception\ClientException $e) {
         // Ошибка на стороне клиента (4xx)
-        $flash->addMessage('error', 'Ошибка клиента'); 
-    } catch (\GuzzleHttp\Exception\ServerException $e) { 
+        $flash->addMessage('error', 'Ошибка клиента');
+    } catch (\GuzzleHttp\Exception\ServerException $e) {
         // Ошибка на стороне сервера (5xx)
-        $flash->addMessage('error', 'Ошибка сервера'); 
-    } catch (\GuzzleHttp\Exception\RequestException $e) { 
+        $flash->addMessage('error', 'Ошибка сервера');
+    } catch (\GuzzleHttp\Exception\RequestException $e) {
         // Общая ошибка запроса
-        $flash->addMessage('error', 'Ошибка при выполнении запроса'); 
-    } catch (\Exception $e) { 
+        $flash->addMessage('error', 'Ошибка при выполнении запроса');
+    } catch (\Exception $e) {
         // Любая другая ошибка
-        $flash->addMessage('error', 'Произошла ошибка при проверке сайта'); 
+        $flash->addMessage('error', 'Произошла ошибка при проверке сайта');
     }
 
     return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
