@@ -1,6 +1,6 @@
 <?php
 
-session_start();
+//session_start();
 
 use DI\Container;
 use Dotenv\Dotenv;
@@ -13,7 +13,14 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Slim\Flash\Messages;
 
-require_once file_exists(__DIR__ . '/../../autoload.php') ? __DIR__ . '/../../autoload.php' : __DIR__ . '/../vendor/autoload.php';
+$autoloadPath1 = __DIR__ . '/../../autoload.php';
+$autoloadPath2 = __DIR__ . '/../vendor/autoload.php';
+
+if (file_exists($autoloadPath1)) {
+    require_once $autoloadPath1;
+} else {
+    require_once $autoloadPath2;
+}
 
 $envPath = __DIR__ . '/../.env';
 
@@ -53,13 +60,9 @@ $container->set('pdo', function () {
         throw new RuntimeException("Failed to connect to the database: " . $e->getMessage());
     }
 
-    initializeDatabase($pdo, __DIR__ . '/../' . 'database.sql');
+    // Инлайн инициализация базы данных
+    $sqlFilePath = __DIR__ . '/../' . 'database.sql';
 
-    return $pdo;
-});
-
-function initializeDatabase(PDO $pdo, string $sqlFilePath): void
-{
     if (!file_exists($sqlFilePath)) {
         throw new RuntimeException("SQL file not found: " . $sqlFilePath);
     }
@@ -75,7 +78,9 @@ function initializeDatabase(PDO $pdo, string $sqlFilePath): void
     } catch (PDOException $e) {
         throw new RuntimeException("Failed to initialize the database: " . $e->getMessage());
     }
-}
+
+    return $pdo;
+});
 
 $container->set('httpClient', fn() => new Client());
 $container->set('flash', fn() => new Messages());
@@ -207,7 +212,10 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             }
         }
 
-        $stmt = $pdo->prepare('INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare('
+            INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ');
         $stmt->execute([
             $urlId,
             $res->getStatusCode(),
@@ -216,14 +224,17 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             $metaDescription,
             Carbon::now()
         ]);
-
-        $flash->addMessage('success', 'Страница успешно проверена');
-    } catch (\GuzzleHttp\Exception\ConnectException $e) {
-        $flash->addMessage('error', 'Ошибка при проверке: не удалось подключиться к сайту.');
     } catch (\GuzzleHttp\Exception\RequestException $e) {
-        $flash->addMessage('error', 'Ошибка при проверке: ' . $e->getMessage());
+        $errorMessage500 = 'SSL: no alternative certificate subject name matches target host name';
+        if (strpos($e->getMessage(), $errorMessage500) !== false) {
+            $renderer = $container->get('renderer');
+            return $renderer->render($response->withStatus(500), 'error500.phtml', [
+                'errorMessage' => ''
+            ]);
+        } else {
+            $flash->addMessage('error', 'Ошибка при проверке: ' . $e->getMessage());
+        }
     } catch (\Exception $e) {
-        // Ловим любые другие ошибки, включая ошибки статуса ответа
         $flash->addMessage('error', 'Произошла ошибка при проверке сайта: ' . $e->getMessage());
     }
 
