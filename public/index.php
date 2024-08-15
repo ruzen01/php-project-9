@@ -30,55 +30,31 @@ if (file_exists($envPath)) {
 }
 
 $container = new Container();
+
 $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 
 $container->set('pdo', function () {
     $databaseUrl = getenv('DATABASE_URL') ? parse_url(getenv('DATABASE_URL')) : parse_url($_ENV['DATABASE_URL']);
-
-    if (!$databaseUrl) {
-        throw new RuntimeException('DATABASE_URL not set or incorrectly formatted');
-    }
-
+   
     $host = $databaseUrl['host'] ?? null;
     $port = $databaseUrl['port'] ?? '5432';
     $dbname = isset($databaseUrl['path']) ? ltrim($databaseUrl['path'], '/') : null;
     $user = $databaseUrl['user'] ?? null;
     $pass = $databaseUrl['pass'] ?? null;
 
-    if (!$host || !$dbname || !$user || !$pass) {
-        throw new RuntimeException('Incomplete database connection details');
-    }
-
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $host, $port, $dbname);
 
-    try {
-        $pdo = new PDO($dsn, $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-    } catch (PDOException $e) {
-        throw new RuntimeException("Failed to connect to the database: " . $e->getMessage());
-    }
-
-    // Инлайн инициализация базы данных
+    $pdo = new PDO($dsn, $user, $pass, [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+    
     $sqlFilePath = __DIR__ . '/../' . 'database.sql';
-
-    if (!file_exists($sqlFilePath)) {
-        throw new RuntimeException("SQL file not found: " . $sqlFilePath);
-    }
 
     $sql = file_get_contents($sqlFilePath);
 
-    if ($sql === false) {
-        throw new RuntimeException("Failed to read SQL file: " . $sqlFilePath);
-    }
-
-    try {
-        $pdo->exec($sql);
-    } catch (PDOException $e) {
-        throw new RuntimeException("Failed to initialize the database: " . $e->getMessage());
-    }
-
+    $pdo->exec($sql);
+    
     return $pdo;
 });
 
