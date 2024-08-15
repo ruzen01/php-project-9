@@ -187,20 +187,19 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             throw new \Exception('Сайт вернул ошибку: ' . $res->getStatusCode());
         }
 
-        $document = new Document((string) $res->getBody());
+        $dom = new \DOMDocument();
+        @$dom->loadHTML((string) $res->getBody());
 
-        // Получаем h1 элемент
-        $h1Element = $document->first('h1');
-        $h1 = ($h1Element instanceof \DiDom\Element) ? $h1Element->text() : $h1Element->nodeValue;
-
-        // Получаем title элемент
-        $titleElement = $document->first('title');
-        $title = ($titleElement instanceof \DiDom\Element) ? $titleElement->text() : $titleElement->nodeValue;
+        $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
+        $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
 
         $metaDescription = '';
-        $metaTag = $document->first('meta[name="description"]');
-        if ($metaTag) {
-            $metaDescription = $metaTag->getAttribute('content');
+        $metaTags = $dom->getElementsByTagName('meta');
+        foreach ($metaTags as $meta) {
+            if ($meta->getAttribute('name') === 'description') {
+                $metaDescription = $meta->getAttribute('content');
+                break;
+            }
         }
 
         $stmt = $pdo->prepare('
