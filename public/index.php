@@ -3,6 +3,7 @@
 session_start();
 
 use DI\Container;
+use DiDom\Document;
 use Dotenv\Dotenv;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -186,17 +187,17 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             throw new \Exception('Сайт вернул ошибку: ' . $res->getStatusCode());
         }
 
-        $dom = new \DOMDocument();
-        @$dom->loadHTML((string) $res->getBody());
-
-        $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
-        $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
-
+        $document = new Document();
+        @$document->loadHtml((string) $res->getBody());
+        
+        $h1 = optional($document->first('h1'))->text() ?? '';
+        $title = optional($document->first('title'))->text() ?? '';
+        
         $metaDescription = '';
-        $metaTags = $dom->getElementsByTagName('meta');
+        $metaTags = $document->find('meta');
         foreach ($metaTags as $meta) {
-            if ($meta->getAttribute('name') === 'description') {
-                $metaDescription = $meta->getAttribute('content');
+            if (optional($meta)->getAttribute('name') === 'description') {
+                $metaDescription = optional($meta)->getAttribute('content') ?? '';
                 break;
             }
         }
