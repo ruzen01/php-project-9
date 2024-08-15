@@ -96,6 +96,8 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $url = trim($parsedBody['url']['name']);
     }
 
+    $url = rtrim($url, '/');
+
     // Нормализация URL (удаление query параметров)
     $urlComponents = parse_url($url);
     if (isset($urlComponents['scheme']) && isset($urlComponents['host'])) {
