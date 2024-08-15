@@ -189,10 +189,10 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
 
         $document = new Document();
         @$document->loadHtml((string) $res->getBody());
-        
+
         $h1 = optional($document->first('h1'))->text() ?? '';
         $title = optional($document->first('title'))->text() ?? '';
-        
+
         $metaDescription = '';
         $metaTags = $document->find('meta');
         foreach ($metaTags as $meta) {
