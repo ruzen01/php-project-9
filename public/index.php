@@ -201,9 +201,9 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             }
         }
 
-        // Декодируем title и description в правильную кодировку
-        $title = mb_convert_encoding($title, 'UTF-8', 'ISO-8859-1');
-        $metaDescription = mb_convert_encoding($metaDescription, 'UTF-8', 'ISO-8859-1');
+        // Пробуем сначала декодировать как Latin-1, затем снова конвертировать в UTF-8
+        $title = utf8_encode(utf8_decode($title));
+        $metaDescription = utf8_encode(utf8_decode($metaDescription));
 
         $stmt = $pdo->prepare('
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
