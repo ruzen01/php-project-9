@@ -201,9 +201,19 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             }
         }
 
-        // Пробуем сначала декодировать как Latin-1, затем снова конвертировать в UTF-8
-        $title = utf8_encode(utf8_decode($title));
-        $metaDescription = utf8_encode(utf8_decode($metaDescription));
+        // Определяем исходную кодировку title и description
+        $encodingTitle = mb_detect_encoding($title, mb_detect_order(), true);
+        $encodingDescription = mb_detect_encoding($metaDescription, mb_detect_order(), true);
+
+// Конвертируем в UTF-8, если исходная кодировка определена
+        if ($encodingTitle !== 'UTF-8') {
+            $title = mb_convert_encoding($title, 'UTF-8', $encodingTitle);
+        }
+
+        if ($encodingDescription !== 'UTF-8') {
+            $metaDescription = mb_convert_encoding($metaDescription, 'UTF-8', $encodingDescription);
+        }
+
 
         $stmt = $pdo->prepare('
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
