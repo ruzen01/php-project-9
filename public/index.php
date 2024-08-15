@@ -53,6 +53,10 @@ $container->set('pdo', function () {
 
     $sql = file_get_contents($sqlFilePath);
 
+    if ($sql === false) {
+        throw new RuntimeException("Не удалось прочитать файл SQL по пути: $sqlFilePath");
+    }
+
     $pdo->exec($sql);
     
     return $pdo;
