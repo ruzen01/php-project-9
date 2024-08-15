@@ -190,10 +190,11 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         // Используем DiDOM для парсинга HTML
         $document = new Document((string) $res->getBody());
 
-        $h1 = optional($document->first('h1'))->text() ?? '';
-        $title = optional($document->first('title'))->text() ?? '';
+        $h1 = $document->first('h1') ? $document->first('h1')->text() : '';
+        $title = $document->first('title') ? $document->first('title')->text() : '';
 
-        $metaDescription = optional($document->first('meta[name="description"]'))->getAttribute('content') ?? '';
+        $metaTag = $document->first('meta[name="description"]');
+        $metaDescription = $metaTag ? $metaTag->getAttribute('content') : '';
 
         $stmt = $pdo->prepare('
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
