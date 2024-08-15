@@ -188,7 +188,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         }
 
         $dom = new \DOMDocument();
-        @$dom->loadHTML((string) $res->getBody());
+        @$dom->loadHTML(mb_convert_encoding((string) $res->getBody(), 'HTML-ENTITIES', 'UTF-8'));
 
         $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
         $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
@@ -217,19 +217,14 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
 
         $flash->addMessage('success', 'Страница успешно проверена');
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
-        // Ошибка подключения, например, сайт не доступен
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
     } catch (\GuzzleHttp\Exception\ClientException $e) {
-        // Ошибка на стороне клиента (4xx)
         $flash->addMessage('error', 'Ошибка клиента');
     } catch (\GuzzleHttp\Exception\ServerException $e) {
-        // Ошибка на стороне сервера (5xx)
         $flash->addMessage('error', 'Ошибка сервера');
     } catch (\GuzzleHttp\Exception\RequestException $e) {
-        // Общая ошибка запроса
         $flash->addMessage('error', 'Ошибка при выполнении запроса');
     } catch (\Exception $e) {
-        // Любая другая ошибка
         $flash->addMessage('error', 'Произошла ошибка при проверке сайта');
     }
 
