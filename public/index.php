@@ -187,23 +187,25 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             throw new \Exception('Сайт вернул ошибку: ' . $res->getStatusCode());
         }
 
-        // Используем DiDOM для парсинга HTML
-        $document = new Document((string) $res->getBody());
+        $dom = new \DOMDocument();
+        @$dom->loadHTML((string) $res->getBody());
 
-        $h1Element = $document->first('h1');
-        $h1 = $h1Element ? $h1Element->text() : '';
+        $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
+        $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
 
-        $titleElement = $document->first('title');
-        $title = $titleElement ? $titleElement->text() : '';
-
-        $metaTag = $document->first('meta[name="description"]');
-        $metaDescription = $metaTag ? $metaTag->getAttribute('content') : '';
+        $metaDescription = '';
+        $metaTags = $dom->getElementsByTagName('meta');
+        foreach ($metaTags as $meta) {
+            if ($meta->getAttribute('name') === 'description') {
+                $metaDescription = $meta->getAttribute('content');
+                break;
+            }
+        }
 
         $stmt = $pdo->prepare('
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         ');
-
         $stmt->execute([
             $urlId,
             $res->getStatusCode(),
