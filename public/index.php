@@ -35,7 +35,7 @@ $container->set('renderer', fn() => new PhpRenderer(__DIR__ . '/../templates'));
 
 $container->set('pdo', function () {
     $databaseUrl = getenv('DATABASE_URL') ? parse_url(getenv('DATABASE_URL')) : parse_url($_ENV['DATABASE_URL']);
-   
+
     $host = $databaseUrl['host'] ?? null;
     $port = $databaseUrl['port'] ?? '5432';
     $dbname = isset($databaseUrl['path']) ? ltrim($databaseUrl['path'], '/') : null;
@@ -48,7 +48,7 @@ $container->set('pdo', function () {
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
-    
+
     $sqlFilePath = __DIR__ . '/../' . 'database.sql';
 
     $sql = file_get_contents($sqlFilePath);
@@ -58,7 +58,7 @@ $container->set('pdo', function () {
     }
 
     $pdo->exec($sql);
-    
+
     return $pdo;
 });
 
