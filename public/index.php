@@ -107,78 +107,72 @@ $app->get('/', function (Request $request, Response $response) use ($container) 
     ]);
 });
 
-$app->post('/urls', function (Request $request, Response $response) use ($container) {
-    $url = trim($request->getParsedBody()['url']['name'] ?? '');
-    $v = new V(['url' => $url]);
+$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
+    $pdo = $container->get('pdo');
+    $httpClient = $container->get('httpClient');
+    $urlId = $args['url_id'];
 
-    $isEmpty = empty($url);
-
-    $v->rule('required', 'url')->message('URL не должен быть пустым');
-    if (!$isEmpty) {
-        $v->rule('url', 'url')->message('Некорректный URL')
-          ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
-    }
-
-    if ($v->validate()) {
-        $pdo = $container->get('pdo');
-
-        // Нормализация URL без функции
-        $parsedUrl = parse_url($url);
-        $scheme = $parsedUrl['scheme'] ?? 'http';
-        $host = $parsedUrl['host'] ?? '';
-        $path = $parsedUrl['path'] ?? '';
-        $normalizedUrl = "{$scheme}://{$host}{$path}";
-
-        $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
-        $stmt->execute([$normalizedUrl]);
-        $existingUrl = $stmt->fetch();
-
-        $flash = $container->get('flash');
-        if (!$existingUrl) {
-            $stmt = $pdo->prepare('INSERT INTO urls (name, created_at) VALUES (?, ?)');
-            $stmt->execute([$normalizedUrl, Carbon::now()]);  // Сохраняем нормализованный URL
-            $flash->addMessage('success', 'Страница успешно добавлена');
-            return $response->withHeader('Location', "/urls/{$pdo->lastInsertId()}")->withStatus(302);
-        } else {
-            $flash->addMessage('info', 'Страница уже существует');
-            return $response->withHeader('Location', "/urls/{$existingUrl['id']}")->withStatus(302);
-        }
-    }
+    $stmt = $pdo->prepare('SELECT name FROM urls WHERE id = ?');
+    $stmt->execute([$urlId]);
+    $url = $stmt->fetchColumn();
 
     $flash = $container->get('flash');
-    $errors = $v->errors();
-    $errorMessages = [];
-    $incorrectUrlError = false;
-    $emptyUrlError = false;
 
-    foreach ($errors as $fieldErrors) {
-        foreach ($fieldErrors as $error) {
-            if ($error === 'Некорректный URL' && !$isEmpty) {
-                $incorrectUrlError = true;
-            } elseif ($error === 'URL не должен быть пустым') {
-                $emptyUrlError = true;
-            } else {
-                $errorMessages[] = $error;
+    try {
+        $res = $httpClient->get($url, ['timeout' => 10]);
+
+        if ($res->getStatusCode() >= 400) {
+            // Если статус код >= 400, считаем это ошибкой
+            throw new \Exception('Сайт вернул ошибку: ' . $res->getStatusCode());
+        }
+
+        $dom = new \DOMDocument();
+        @$dom->loadHTML((string) $res->getBody());
+
+        $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
+        $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
+
+        $metaDescription = '';
+        $metaTags = $dom->getElementsByTagName('meta');
+        foreach ($metaTags as $meta) {
+            if ($meta->getAttribute('name') === 'description') {
+                $metaDescription = $meta->getAttribute('content');
+                break;
             }
         }
+
+        $stmt = $pdo->prepare('
+            INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ');
+        $stmt->execute([
+            $urlId,
+            $res->getStatusCode(),
+            $h1,
+            $title,
+            $metaDescription,
+            Carbon::now()
+        ]);
+
+        $flash->addMessage('success', 'Страница успешно проверена');
+    } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        // Ошибка подключения, например, сайт не доступен
+        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+    } catch (\GuzzleHttp\Exception\ClientException $e) {
+        // Ошибка на стороне клиента (4xx)
+        $flash->addMessage('error', 'Ошибка клиента');
+    } catch (\GuzzleHttp\Exception\ServerException $e) {
+        // Ошибка на стороне сервера (5xx)
+        $flash->addMessage('error', 'Ошибка сервера');
+    } catch (\GuzzleHttp\Exception\RequestException $e) {
+        // Общая ошибка запроса
+        $flash->addMessage('error', 'Ошибка при выполнении запроса');
+    } catch (\Exception $e) {
+        // Любая другая ошибка
+        $flash->addMessage('error', 'Произошла ошибка при проверке сайта');
     }
 
-    if (!empty($errorMessages)) {
-        $flash->addMessage('error', implode('; ', $errorMessages));
-    }
-    if ($incorrectUrlError) {
-        $flash->addMessage('incorrect_url', 'Некорректный URL');
-    }
-    if ($emptyUrlError) {
-        $flash->addMessage('empty_url', 'URL не должен быть пустым');
-    }
-
-    $flash->addMessage('entered_url', $url);
-
-    $renderer = $container->get('renderer');
-    return $renderer->render($response, 'index.phtml', [
-        'flashMessages' => $flash->getMessages()
-    ]);
+    return $response->withHeader('Location', "/urls/{$urlId}")->withStatus(302);
 });
 
 $app->post('/urls/{url_id}/checks', function (Request $request, Response $response, $args) use ($container) {
