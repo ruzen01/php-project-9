@@ -201,19 +201,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             }
         }
 
-// Определяем исходную кодировку title и description
-        $encodingTitle = mb_detect_encoding($title, mb_detect_order(), true);
-        $encodingDescription = mb_detect_encoding($metaDescription, mb_detect_order(), true);
-
-// Конвертируем в UTF-8, если исходная кодировка определена и отличается от UTF-8
-        if ($encodingTitle && $encodingTitle !== 'UTF-8') {
-            $title = mb_convert_encoding($title, 'UTF-8', $encodingTitle);
-        }
-
-        if ($encodingDescription && $encodingDescription !== 'UTF-8') {
-            $metaDescription = mb_convert_encoding($metaDescription, 'UTF-8', $encodingDescription);
-        }
-
         $stmt = $pdo->prepare('
             INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
