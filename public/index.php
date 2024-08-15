@@ -95,6 +95,15 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         $url = trim($parsedBody['url']['name']);
     }
 
+    // Нормализация URL (удаление query параметров)
+    $urlComponents = parse_url($url);
+    if (isset($urlComponents['scheme']) && isset($urlComponents['host'])) {
+        $url = $urlComponents['scheme'] . '://' . $urlComponents['host'];
+        if (isset($urlComponents['path'])) {
+            $url .= $urlComponents['path'];
+        }
+    }
+
     $v = new V(['url' => $url]);
 
     $isEmpty = empty($url);
