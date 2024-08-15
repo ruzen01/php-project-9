@@ -189,8 +189,13 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
 
         $document = new Document((string) $res->getBody());
 
-        $h1 = $document->first('h1') ? $document->first('h1')->text() : '';
-        $title = $document->first('title') ? $document->first('title')->text() : '';
+        // Получаем h1 элемент
+        $h1Element = $document->first('h1');
+        $h1 = ($h1Element instanceof \DiDom\Element) ? $h1Element->text() : $h1Element->nodeValue;
+
+        // Получаем title элемент
+        $titleElement = $document->first('title');
+        $title = ($titleElement instanceof \DiDom\Element) ? $titleElement->text() : $titleElement->nodeValue;
 
         $metaDescription = '';
         $metaTag = $document->first('meta[name="description"]');
