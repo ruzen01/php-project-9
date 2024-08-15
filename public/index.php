@@ -187,17 +187,17 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             throw new \Exception('Сайт вернул ошибку: ' . $res->getStatusCode());
         }
 
-        $document = new Document();
-        @$document->loadHtml((string) $res->getBody());
+        $dom = new \DOMDocument();
+        @$dom->loadHTML((string) $res->getBody());
 
-        $h1 = optional($document->first('h1'))->text() ?? '';
-        $title = optional($document->first('title'))->text() ?? '';
+        $h1 = $dom->getElementsByTagName('h1')->item(0)->nodeValue ?? '';
+        $title = $dom->getElementsByTagName('title')->item(0)->nodeValue ?? '';
 
         $metaDescription = '';
-        $metaTags = $document->find('meta');
+        $metaTags = $dom->getElementsByTagName('meta');
         foreach ($metaTags as $meta) {
-            if (optional($meta)->getAttribute('name') === 'description') {
-                $metaDescription = optional($meta)->getAttribute('content') ?? '';
+            if ($meta->getAttribute('name') === 'description') {
+                $metaDescription = $meta->getAttribute('content');
                 break;
             }
         }
