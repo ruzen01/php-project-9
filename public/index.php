@@ -190,8 +190,11 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         // Используем DiDOM для парсинга HTML
         $document = new Document((string) $res->getBody());
 
-        $h1 = $document->first('h1') ? $document->first('h1')->text() : '';
-        $title = $document->first('title') ? $document->first('title')->text() : '';
+        $h1Element = $document->first('h1');
+        $h1 = $h1Element ? $h1Element->text() : '';
+
+        $titleElement = $document->first('title');
+        $title = $titleElement ? $titleElement->text() : '';
 
         $metaTag = $document->first('meta[name="description"]');
         $metaDescription = $metaTag ? $metaTag->getAttribute('content') : '';
