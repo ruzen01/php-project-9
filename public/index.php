@@ -3,13 +3,12 @@
 session_start();
 
 use DI\Container;
-use DiDom\Document;
 use Dotenv\Dotenv;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Views\PhpRenderer;
-use Valitron\Validator as V;
+use Valitron\Validator;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Slim\Flash\Messages;
@@ -46,8 +45,8 @@ $container->set('pdo', function () {
     $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s", $host, $port, $dbname);
 
     $pdo = new PDO($dsn, $user, $pass, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 
     $sqlFilePath = __DIR__ . '/../' . 'database.sql';
@@ -107,19 +106,19 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
         }
     }
 
-    $v = new V(['url' => $url]);
+    $validator = new Validator(['url' => $url]);
 
     $isEmpty = empty($url);
 
     // Валидация: обязательность заполнения URL
-    $v->rule('required', 'url')->message('URL не должен быть пустым');
+    $validator->rule('required', 'url')->message('URL не должен быть пустым');
     if (!$isEmpty) {
         // Валидация: корректность URL и длина
-        $v->rule('url', 'url')->message('Некорректный URL')
+        $validator->rule('url', 'url')->message('Некорректный URL')
           ->rule('lengthMax', 'url', 255)->message('URL не должен превышать 255 символов');
     }
 
-    if ($v->validate()) {
+    if ($validator->validate()) {
         // Подключение к базе данных
         $pdo = $container->get('pdo');
         $stmt = $pdo->prepare('SELECT * FROM urls WHERE name = ?');
@@ -141,7 +140,7 @@ $app->post('/urls', function (Request $request, Response $response) use ($contai
     }
 
     // Обработка ошибок валидации
-    $errors = $v->errors();
+    $errors = $validator->errors();
     $errorMessages = [];
     $incorrectUrlError = false;
     $emptyUrlError = false;
@@ -236,17 +235,15 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
 $app->get('/urls', function (Request $request, Response $response) use ($container) {
     $pdo = $container->get('pdo');
     $stmt = $pdo->query('
-        SELECT urls.id, urls.name, 
-               url_checks.created_at as last_check_at,
-               url_checks.status_code as last_status_code 
+        SELECT DISTINCT ON (urls.id)
+            urls.id, 
+            urls.name, 
+            url_checks.created_at AS last_check_at, 
+            url_checks.status_code AS last_status_code
         FROM urls
-        LEFT JOIN url_checks ON urls.id = url_checks.url_id 
-        AND url_checks.created_at = (
-            SELECT MAX(created_at) 
-            FROM url_checks 
-            WHERE url_checks.url_id = urls.id
-        )
-        ORDER BY urls.id DESC
+        LEFT JOIN url_checks 
+            ON urls.id = url_checks.url_id
+        ORDER BY urls.id DESC, url_checks.created_at DESC
     ');
     $renderer = $container->get('renderer');
     return $renderer->render($response, 'urls.phtml', ['urls' => $stmt->fetchAll()]);
